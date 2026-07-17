@@ -2,6 +2,7 @@ package com.tripflow.global.exception;
 
 import com.tripflow.auth.exception.DuplicateEmailException;
 import com.tripflow.auth.exception.DuplicatePhoneNumberException;
+import com.tripflow.auth.exception.InvalidLoginException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -59,6 +60,18 @@ public class GlobalExceptionHandler {
                         "code", "VALIDATION_FAILED",
                         "message", "입력값을 확인해주세요.",
                         "errors", errors
+                ));
+    }
+
+    @ExceptionHandler(InvalidLoginException.class)
+    public ResponseEntity<Map<String, String>> handleInvalidLogin(
+            InvalidLoginException exception
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
+                .body(Map.of(
+                        "code", "INVALID_CREDENTIALS",
+                        "message", exception.getMessage()
                 ));
     }
 }

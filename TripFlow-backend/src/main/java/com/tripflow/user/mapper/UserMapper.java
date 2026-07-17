@@ -13,5 +13,9 @@ public interface UserMapper {
             @Param("phoneNumber") String phoneNumber
     );
 
+    User findByEmail(
+            @Param("email") String email
+    );
+
     int insertUser(User user);
 }

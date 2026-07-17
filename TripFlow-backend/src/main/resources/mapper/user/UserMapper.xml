@@ -22,6 +22,20 @@
         )
     </select>
 
+    <select id="findByEmail"
+            resultType="com.tripflow.user.domain.User">
+
+        SELECT
+        user_id,
+        password_hash,
+        name,
+        phone_number,
+        email
+        FROM user_info
+        WHERE email = #{email}
+
+    </select>
+
     <insert id="insertUser"
             parameterType="com.tripflow.user.domain.User"
             useGeneratedKeys="true"

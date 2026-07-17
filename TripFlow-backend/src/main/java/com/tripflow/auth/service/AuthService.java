@@ -1,9 +1,12 @@
 package com.tripflow.auth.service;
 
+import com.tripflow.auth.dto.LoginRequest;
+import com.tripflow.auth.dto.LoginResponse;
 import com.tripflow.auth.dto.SignupRequest;
 import com.tripflow.auth.dto.SignupResponse;
 import com.tripflow.auth.exception.DuplicateEmailException;
 import com.tripflow.auth.exception.DuplicatePhoneNumberException;
+import com.tripflow.auth.exception.InvalidLoginException;
 import com.tripflow.user.domain.User;
 import com.tripflow.user.mapper.UserMapper;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -64,6 +67,34 @@ public class AuthService {
         }
 
         return new SignupResponse(
+                user.getUserId(),
+                user.getEmail(),
+                user.getName(),
+                user.getPhoneNumber()
+        );
+    }
+
+
+    @Transactional(readOnly = true)
+    public LoginResponse login(LoginRequest request) {
+        String email = normalizeEmail(request.email());
+
+        User user = userMapper.findByEmail(email);
+
+        if (user == null) {
+            throw new InvalidLoginException();
+        }
+
+        boolean passwordMatches = passwordEncoder.matches(
+                request.password(),
+                user.getPasswordHash()
+        );
+
+        if (!passwordMatches) {
+            throw new InvalidLoginException();
+        }
+
+        return new LoginResponse(
                 user.getUserId(),
                 user.getEmail(),
                 user.getName(),

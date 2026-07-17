@@ -1,8 +1,6 @@
 package com.tripflow.auth.controller;
 
-import com.tripflow.auth.dto.EmailAvailabilityResponse;
-import com.tripflow.auth.dto.SignupRequest;
-import com.tripflow.auth.dto.SignupResponse;
+import com.tripflow.auth.dto.*;
 import com.tripflow.auth.service.AuthService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
@@ -45,5 +43,14 @@ public class AuthController {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(response);
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<LoginResponse> login(
+            @Valid @RequestBody LoginRequest request
+    ) {
+        LoginResponse response = authService.login(request);
+
+        return ResponseEntity.ok(response);
     }
 }
