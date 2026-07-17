@@ -196,66 +196,6 @@
   box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
 }
 
-.auth-modal-signup-types {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-  margin-bottom: 16px;
-}
-
-.auth-modal-signup-type {
-  display: grid;
-  gap: 6px;
-  align-content: center;
-  min-height: 92px;
-  padding: 14px;
-  color: #526172;
-  background: #ffffff;
-  border: 1px solid #d9e2ec;
-  border-radius: 16px;
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-
-.auth-modal-signup-type:hover {
-  border-color: #1687d9;
-  box-shadow: 0 12px 26px rgba(22, 135, 217, 0.16);
-}
-
-.auth-modal-signup-type strong {
-  color: #14213d;
-  font-size: 15px;
-  font-weight: 850;
-}
-
-.auth-modal-signup-type span {
-  color: #64748b;
-  font-size: 12px;
-  font-weight: 700;
-  line-height: 1.35;
-}
-
-.auth-modal-back-button {
-  width: 100%;
-  height: 52px;
-  margin-top: -2px;
-  padding: 0 16px;
-  color: #526172;
-  background: #ffffff;
-  border: 1px solid #d9e2ec;
-  border-radius: 14px;
-  font: inherit;
-  font-size: 15px;
-  font-weight: 800;
-  cursor: pointer;
-}
-
-.auth-modal-back-button:hover {
-  color: #0f6fb8;
-  border-color: #1687d9;
-}
-
 .login-modal-field {
   display: grid;
   gap: 7px;
@@ -309,27 +249,10 @@
   color: #1687d9;
 }
 
+.auth-modal-email-status-invalid,
 .auth-modal-email-status-unavailable,
 .auth-modal-email-status-error {
   color: #ef4444;
-}
-
-.auth-modal-phone-row {
-  display: grid;
-  grid-template-columns: 1fr 82px;
-  gap: 8px;
-}
-
-.auth-modal-phone-row button {
-  height: 52px;
-  color: #ffffff;
-  background: #14213d;
-  border: 0;
-  border-radius: 14px;
-  font: inherit;
-  font-size: 14px;
-  font-weight: 800;
-  cursor: pointer;
 }
 
 .auth-modal-agreement {

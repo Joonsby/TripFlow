@@ -1,0 +1,10 @@
+ALTER TABLE user_info
+DROP COLUMN agency,
+    DROP COLUMN phone,
+    DROP COLUMN birth,
+    DROP COLUMN gender,
+    DROP COLUMN post_code,
+    DROP COLUMN road_addr,
+    DROP COLUMN jibun_addr,
+    DROP COLUMN detail_addr,
+    DROP COLUMN reference_addr;

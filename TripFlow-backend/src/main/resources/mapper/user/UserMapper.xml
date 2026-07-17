@@ -13,4 +13,36 @@
         )
     </select>
 
+    <select id="existsByPhoneNumber"
+            resultType="boolean">
+        SELECT EXISTS (
+        SELECT 1
+        FROM user_info
+        WHERE phone_number = #{phoneNumber}
+        )
+    </select>
+
+    <insert id="insertUser"
+            parameterType="com.tripflow.user.domain.User"
+            useGeneratedKeys="true"
+            keyProperty="userId"
+            keyColumn="user_id">
+
+        INSERT INTO user_info (
+        password_hash,
+        name,
+        phone_number,
+        email,
+        join_date
+        )
+        VALUES (
+        #{passwordHash},
+        #{name},
+        #{phoneNumber},
+        #{email},
+        NOW()
+        )
+
+    </insert>
+
 </mapper>
