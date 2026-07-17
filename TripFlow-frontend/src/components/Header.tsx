@@ -1,4 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
+import type { LoginResponse } from '../api/auth'
+import DateRangePicker from './DateRangePicker'
+import GuestPicker from './GuestPicker'
 import logo from '../assets/logo.png'
 import './Header.css'
 
@@ -16,24 +19,22 @@ const languages: Language[] = [
   { code: 'zh', label: '中文' },
 ]
 
-const today = new Date()
-const tomorrow = new Date(today)
-tomorrow.setDate(today.getDate() + 1)
-
-const formatDate = (date: Date) => date.toISOString().slice(0, 10)
-
 type HeaderProps = {
+  authenticatedUser: LoginResponse | null
   onAuthClick?: () => void
+  onLogout: () => void
 }
 
-function Header({ onAuthClick }: HeaderProps) {
+function Header({ authenticatedUser, onAuthClick, onLogout }: HeaderProps) {
   const [theme, setTheme] = useState<Theme>('light')
   const [selectedLanguage, setSelectedLanguage] = useState(languages[0])
   const [isLanguageOpen, setIsLanguageOpen] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [isProfileOpen, setIsProfileOpen] = useState(false)
   const languageMenuRef = useRef<HTMLDivElement>(null)
   const mobileMenuButtonRef = useRef<HTMLButtonElement>(null)
   const mobileMenuPanelRef = useRef<HTMLDivElement>(null)
+  const profileMenuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme
@@ -88,6 +89,28 @@ function Header({ onAuthClick }: HeaderProps) {
     }
   }, [isLanguageOpen])
 
+  useEffect(() => {
+    if (!isProfileOpen) return
+
+    const handlePointerDown = (event: PointerEvent) => {
+      if (
+        event.target instanceof Node &&
+        !profileMenuRef.current?.contains(event.target)
+      ) {
+        setIsProfileOpen(false)
+      }
+    }
+
+    document.addEventListener('pointerdown', handlePointerDown)
+    return () => document.removeEventListener('pointerdown', handlePointerDown)
+  }, [isProfileOpen])
+
+  const navigate = (path: string) => {
+    window.history.pushState({}, '', path)
+    setIsProfileOpen(false)
+    setIsMobileMenuOpen(false)
+  }
+
   const isDarkMode = theme === 'dark'
 
   return (
@@ -130,34 +153,13 @@ function Header({ onAuthClick }: HeaderProps) {
 
         <form className="header-search" aria-label="숙소 검색">
           <label className="search-field">
-            <span>위치</span>
-            <input type="text" name="location" placeholder="어디로 떠나나요?" />
+            <span>여행지</span>
+            <input type="text" name="location" placeholder="여행지 검색" />
           </label>
 
-          <label className="search-field">
-            <span>체크인</span>
-            <input type="date" name="checkIn" defaultValue={formatDate(today)} />
-          </label>
+          <DateRangePicker />
 
-          <label className="search-field">
-            <span>체크아웃</span>
-            <input
-              type="date"
-              name="checkOut"
-              defaultValue={formatDate(tomorrow)}
-            />
-          </label>
-
-          <label className="search-field search-field-guests">
-            <span>인원</span>
-            <input
-              type="number"
-              name="guests"
-              min="1"
-              max="15"
-              defaultValue="2"
-            />
-          </label>
+          <GuestPicker />
 
           <button className="search-button" type="submit">
             검색
@@ -165,16 +167,64 @@ function Header({ onAuthClick }: HeaderProps) {
         </form>
 
         <div className="header-actions" aria-label="사용자 메뉴">
-          <button
-            type="button"
-            className="auth-link auth-link-primary"
-            onClick={() => {
-              setIsMobileMenuOpen(false)
-              onAuthClick?.()
-            }}
-          >
-            로그인 또는 회원가입
-          </button>
+          {authenticatedUser ? (
+            <div className="authenticated-actions">
+              <div className="profile-menu" ref={profileMenuRef}>
+                <button
+                  type="button"
+                  className="profile-button"
+                  aria-haspopup="menu"
+                  aria-expanded={isProfileOpen}
+                  onClick={() => setIsProfileOpen((open) => !open)}
+                >
+                  <span className="profile-avatar" aria-hidden="true">
+                    {authenticatedUser.name.trim().charAt(0) || '?'}
+                  </span>
+                  <span className="profile-name">{authenticatedUser.name}</span>
+                  <svg
+                    className="profile-chevron"
+                    viewBox="0 0 20 20"
+                    aria-hidden="true"
+                  >
+                    <path d="m6 8 4 4 4-4" />
+                  </svg>
+                </button>
+
+                {isProfileOpen && (
+                  <div className="profile-dropdown" role="menu">
+                    <button type="button" role="menuitem" onClick={() => navigate('/mypage')}>마이페이지</button>
+                    <button type="button" role="menuitem" onClick={() => navigate('/reservations')}>예약 내역</button>
+                    <button type="button" role="menuitem" onClick={() => navigate('/wishlist')}>찜한 숙소</button>
+                    <button type="button" role="menuitem" onClick={() => navigate('/trips')}>여행 일정</button>
+                    <span className="profile-dropdown-divider" aria-hidden="true" />
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className="profile-logout"
+                      onClick={() => {
+                        setIsProfileOpen(false)
+                        setIsMobileMenuOpen(false)
+                        onLogout()
+                      }}
+                    >
+                      로그아웃
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : (
+            <button
+              type="button"
+              className="auth-link auth-link-primary"
+              onClick={() => {
+                setIsMobileMenuOpen(false)
+                onAuthClick?.()
+              }}
+            >
+              로그인 또는 회원가입
+            </button>
+          )}
 
           <div className="language-menu" ref={languageMenuRef}>
             <button

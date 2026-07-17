@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import type { LoginResponse } from './api/auth'
 import AuthModal from './components/AuthModal'
 import Header from './components/Header'
 import './App.css'
@@ -7,6 +8,8 @@ function App() {
   const [isAuthOpen, setIsAuthOpen] = useState(
     window.location.pathname === '/login',
   )
+  const [authenticatedUser, setAuthenticatedUser] =
+    useState<LoginResponse | null>(null)
 
   const openAuth = () => {
     window.history.pushState({}, '', '/login')
@@ -20,8 +23,17 @@ function App() {
 
   return (
     <>
-      <Header onAuthClick={openAuth} />
-      {isAuthOpen && <AuthModal onClose={closeAuth} />}
+      <Header
+        authenticatedUser={authenticatedUser}
+        onAuthClick={openAuth}
+        onLogout={() => setAuthenticatedUser(null)}
+      />
+      {isAuthOpen && (
+        <AuthModal
+          onClose={closeAuth}
+          onLoginSuccess={setAuthenticatedUser}
+        />
+      )}
     </>
   )
 }

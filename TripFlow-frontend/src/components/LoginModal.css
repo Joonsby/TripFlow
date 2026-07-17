@@ -239,6 +239,58 @@
   font-weight: 700;
 }
 
+.auth-modal-form-error {
+  margin: 0;
+  color: #ef4444;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.45;
+  text-align: center;
+}
+
+.auth-modal-complete {
+  display: grid;
+  gap: 12px;
+}
+
+.auth-modal-complete-icon {
+  display: grid;
+  width: 72px;
+  height: 72px;
+  margin: 2px auto 14px;
+  color: #ffffff;
+  background: #1687d9;
+  border-radius: 50%;
+  place-items: center;
+}
+
+.auth-modal-complete-icon svg {
+  width: 40px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2.5;
+}
+
+.auth-modal-complete-home {
+  width: 100%;
+  height: 52px;
+  color: #526172;
+  background: #ffffff;
+  border: 1px solid #d9e2ec;
+  border-radius: 14px;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.auth-modal-complete-home:hover {
+  color: #0f6fb8;
+  border-color: #1687d9;
+}
+
 .auth-modal-email-status {
   color: #64748b;
   font-size: 12px;
