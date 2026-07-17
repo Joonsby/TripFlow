@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import logo from '../assets/logo.png'
 import './Header.css'
 
@@ -23,14 +23,17 @@ tomorrow.setDate(today.getDate() + 1)
 const formatDate = (date: Date) => date.toISOString().slice(0, 10)
 
 type HeaderProps = {
-  onLoginClick?: () => void
+  onAuthClick?: () => void
 }
 
-function Header({ onLoginClick }: HeaderProps) {
+function Header({ onAuthClick }: HeaderProps) {
   const [theme, setTheme] = useState<Theme>('light')
   const [selectedLanguage, setSelectedLanguage] = useState(languages[0])
   const [isLanguageOpen, setIsLanguageOpen] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const languageMenuRef = useRef<HTMLDivElement>(null)
+  const mobileMenuButtonRef = useRef<HTMLButtonElement>(null)
+  const mobileMenuPanelRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme
@@ -43,15 +46,47 @@ function Header({ onLoginClick }: HeaderProps) {
       if (event.key === 'Escape') setIsMobileMenuOpen(false)
     }
 
+    const handlePointerDown = (event: PointerEvent) => {
+      if (!(event.target instanceof Node)) return
+
+      const isInsidePanel = mobileMenuPanelRef.current?.contains(event.target)
+      const isMenuButton = mobileMenuButtonRef.current?.contains(event.target)
+
+      if (!isInsidePanel && !isMenuButton) {
+        setIsMobileMenuOpen(false)
+      }
+    }
+
     const previousOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
     window.addEventListener('keydown', handleEscape)
+    document.addEventListener('pointerdown', handlePointerDown)
 
     return () => {
       document.body.style.overflow = previousOverflow
       window.removeEventListener('keydown', handleEscape)
+      document.removeEventListener('pointerdown', handlePointerDown)
     }
   }, [isMobileMenuOpen])
+
+  useEffect(() => {
+    if (!isLanguageOpen) return
+
+    const handlePointerDown = (event: PointerEvent) => {
+      if (
+        event.target instanceof Node &&
+        !languageMenuRef.current?.contains(event.target)
+      ) {
+        setIsLanguageOpen(false)
+      }
+    }
+
+    document.addEventListener('pointerdown', handlePointerDown)
+
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown)
+    }
+  }, [isLanguageOpen])
 
   const isDarkMode = theme === 'dark'
 
@@ -63,6 +98,7 @@ function Header({ onLoginClick }: HeaderProps) {
         </a>
 
         <button
+          ref={mobileMenuButtonRef}
           type="button"
           className="mobile-menu-button"
           aria-label={isMobileMenuOpen ? '메뉴 닫기' : '메뉴 열기'}
@@ -84,6 +120,7 @@ function Header({ onLoginClick }: HeaderProps) {
         />
 
         <div
+          ref={mobileMenuPanelRef}
           id="mobile-header-menu"
           className={`header-menu-panel${isMobileMenuOpen ? ' is-open' : ''}`}
         >
@@ -130,19 +167,16 @@ function Header({ onLoginClick }: HeaderProps) {
         <div className="header-actions" aria-label="사용자 메뉴">
           <button
             type="button"
-            className="auth-link"
+            className="auth-link auth-link-primary"
             onClick={() => {
               setIsMobileMenuOpen(false)
-              onLoginClick?.()
+              onAuthClick?.()
             }}
           >
-            로그인
+            로그인 또는 회원가입
           </button>
-          <a className="auth-link auth-link-primary" href="/signup">
-            회원가입
-          </a>
 
-          <div className="language-menu">
+          <div className="language-menu" ref={languageMenuRef}>
             <button
               type="button"
               className="language-button"
@@ -217,6 +251,7 @@ function Header({ onLoginClick }: HeaderProps) {
         </div>
         </div>
       </nav>
+
     </header>
   )
 }

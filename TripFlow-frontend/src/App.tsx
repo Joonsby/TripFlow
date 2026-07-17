@@ -1,27 +1,27 @@
 import { useState } from 'react'
+import AuthModal from './components/AuthModal'
 import Header from './components/Header'
-import LoginModal from './components/LoginModal'
 import './App.css'
 
 function App() {
-  const [isLoginOpen, setIsLoginOpen] = useState(
+  const [isAuthOpen, setIsAuthOpen] = useState(
     window.location.pathname === '/login',
   )
 
-  const openLogin = () => {
+  const openAuth = () => {
     window.history.pushState({}, '', '/login')
-    setIsLoginOpen(true)
+    setIsAuthOpen(true)
   }
 
-  const closeLogin = () => {
+  const closeAuth = () => {
     window.history.pushState({}, '', '/')
-    setIsLoginOpen(false)
+    setIsAuthOpen(false)
   }
 
   return (
     <>
-      <Header onLoginClick={openLogin} />
-      {isLoginOpen && <LoginModal onClose={closeLogin} />}
+      <Header onAuthClick={openAuth} />
+      {isAuthOpen && <AuthModal onClose={closeAuth} />}
     </>
   )
 }
