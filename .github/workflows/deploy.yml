@@ -1,0 +1,52 @@
+name: Deploy TripFlow Backend
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "TripFlow-backend/**"
+      - ".github/workflows/deploy.yml"
+
+jobs:
+  deploy:
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+
+    defaults:
+      run:
+        working-directory: TripFlow-backend
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Create environment file
+        run: |
+          cat > .env <<EOF
+          MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}
+          MYSQL_DATABASE=traveling
+          MYSQL_USER=tripflow
+          MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }}
+          EOF
+
+      - name: Validate compose
+        run: docker compose config --quiet
+
+      - name: Build containers
+        run: docker compose build
+
+      - name: Start containers
+        run: docker compose up -d
+
+      - name: Validate Nginx
+        run: docker compose exec -T nginx nginx -t
+
+      - name: Show container status
+        run: docker compose ps
+
+      - name: Show recent logs on failure
+        if: failure()
+        run: docker compose logs --tail=100

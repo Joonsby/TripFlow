@@ -1,0 +1,138 @@
+# -----------------------------
+
+# Gradle / Spring Boot
+
+# -----------------------------
+
+.gradle/
+build/
+out/
+bin/
+
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**/build/
+!**/src/test/**/build/
+!**/src/main/**/out/
+!**/src/test/**/out/
+!**/src/main/**/bin/
+!**/src/test/**/bin/
+
+HELP.md
+
+# -----------------------------
+
+# Environment / Secrets
+
+# -----------------------------
+
+.env
+.env.*
+!.env.example
+
+*.pem
+*.ppk
+*.key
+*.p12
+*.pfx
+*.jks
+
+# -----------------------------
+
+# Let's Encrypt / Certbot
+
+# -----------------------------
+
+certbot/conf/*
+!certbot/conf/.gitkeep
+
+certbot/www/*
+!certbot/www/.gitkeep
+
+# -----------------------------
+
+# Frontend / Node.js
+
+# -----------------------------
+
+node_modules/
+dist/
+dist-ssr/
+
+*.local
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# -----------------------------
+
+# Logs
+
+# -----------------------------
+
+logs/
+*.log
+
+# -----------------------------
+
+# IntelliJ IDEA
+
+# -----------------------------
+
+.idea/
+*.iws
+*.iml
+*.ipr
+
+# -----------------------------
+
+# STS / Eclipse
+
+# -----------------------------
+
+.apt_generated/
+.classpath
+.factorypath
+.project
+.settings/
+.springBeans
+.sts4-cache/
+
+# -----------------------------
+
+# VS Code
+
+# -----------------------------
+
+.vscode/*
+!.vscode/extensions.json
+
+# -----------------------------
+
+# NetBeans
+
+# -----------------------------
+
+nbproject/private/
+nbbuild/
+dist/
+nbdist/
+.nb-gradle/
+
+# -----------------------------
+
+# OS / Editor files
+
+# -----------------------------
+
+.DS_Store
+Thumbs.db
+
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*~
