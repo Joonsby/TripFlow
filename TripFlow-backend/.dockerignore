@@ -1,0 +1,23 @@
+cd /home/ubuntu/apps/TripFlow/TripFlow-backend
+
+cat > .dockerignore <<'EOF'
+.git
+.github
+.gradle
+build
+out
+.idea
+.vscode
+
+.env
+.env.*
+*.pem
+*.ppk
+*.key
+
+certbot
+logs
+*.log
+
+README.md
+EOF

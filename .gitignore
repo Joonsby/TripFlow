@@ -1,7 +1,5 @@
 # -----------------------------
-
 # Gradle / Spring Boot
-
 # -----------------------------
 
 .gradle/
@@ -20,14 +18,17 @@ bin/
 HELP.md
 
 # -----------------------------
-
 # Environment / Secrets
-
 # -----------------------------
 
 .env
 .env.*
 !.env.example
+
+shared/env/
+TripFlow-backend/.env
+TripFlow-backend/.env.*
+!TripFlow-backend/.env.example
 
 *.pem
 *.ppk
@@ -37,102 +38,22 @@ HELP.md
 *.jks
 
 # -----------------------------
-
 # Let's Encrypt / Certbot
-
 # -----------------------------
 
-certbot/conf/*
-!certbot/conf/.gitkeep
+shared/certbot/
+TripFlow-backend/certbot/
 
-certbot/www/*
-!certbot/www/.gitkeep
+# 프로젝트별 .gitkeep 구조를 유지하려면 아래처럼 사용
+# TripFlow-backend/certbot/conf/*
+# !TripFlow-backend/certbot/conf/.gitkeep
+# TripFlow-backend/certbot/www/*
+# !TripFlow-backend/certbot/www/.gitkeep
 
 # -----------------------------
-
 # Frontend / Node.js
-
 # -----------------------------
 
 node_modules/
 dist/
 dist-ssr/
-
-*.local
-
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
-
-# -----------------------------
-
-# Logs
-
-# -----------------------------
-
-logs/
-*.log
-
-# -----------------------------
-
-# IntelliJ IDEA
-
-# -----------------------------
-
-.idea/
-*.iws
-*.iml
-*.ipr
-
-# -----------------------------
-
-# STS / Eclipse
-
-# -----------------------------
-
-.apt_generated/
-.classpath
-.factorypath
-.project
-.settings/
-.springBeans
-.sts4-cache/
-
-# -----------------------------
-
-# VS Code
-
-# -----------------------------
-
-.vscode/*
-!.vscode/extensions.json
-
-# -----------------------------
-
-# NetBeans
-
-# -----------------------------
-
-nbproject/private/
-nbbuild/
-dist/
-nbdist/
-.nb-gradle/
-
-# -----------------------------
-
-# OS / Editor files
-
-# -----------------------------
-
-.DS_Store
-Thumbs.db
-
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
-*~
