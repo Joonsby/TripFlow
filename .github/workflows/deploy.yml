@@ -1,12 +1,18 @@
 name: Deploy TripFlow Backend
 
 on:
+  workflow_dispatch:
+
   push:
     branches:
       - main
     paths:
       - "TripFlow-backend/**"
       - ".github/workflows/deploy-backend.yml"
+
+concurrency:
+  group: tripflow-production-deploy
+  cancel-in-progress: false
 
 jobs:
   deploy:
@@ -23,68 +29,218 @@ jobs:
 
       - name: Sync backend source
         run: |
-          mkdir -p /home/ubuntu/apps/TripFlow/TripFlow-backend
+          set -euo pipefail
+
+          DEPLOY_DIR="/home/ubuntu/apps/TripFlow/TripFlow-backend"
+
+          mkdir -p "$DEPLOY_DIR"
 
           rsync -av --delete \
             --exclude='.env' \
             --exclude='.env.*' \
             --exclude='certbot/' \
             TripFlow-backend/ \
-            /home/ubuntu/apps/TripFlow/TripFlow-backend/
+            "$DEPLOY_DIR/"
 
       - name: Validate production configuration
         working-directory: /home/ubuntu/apps/TripFlow/TripFlow-backend
         run: |
+          set -euo pipefail
+
           docker compose \
             --project-directory /home/ubuntu/apps/TripFlow/TripFlow-backend \
             --env-file /home/ubuntu/apps/TripFlow/shared/env/backend.env \
             -f /home/ubuntu/apps/TripFlow/TripFlow-backend/docker-compose.prod.yml \
             config --quiet
 
-      - name: Deploy containers
+      - name: Deploy MySQL and backend
         working-directory: /home/ubuntu/apps/TripFlow/TripFlow-backend
         run: |
-          docker compose \
-            --project-directory /home/ubuntu/apps/TripFlow/TripFlow-backend \
-            --env-file /home/ubuntu/apps/TripFlow/shared/env/backend.env \
-            -f /home/ubuntu/apps/TripFlow/TripFlow-backend/docker-compose.prod.yml \
-            up -d --build
+          set -euo pipefail
 
-      - name: Restart Nginx
-        working-directory: /home/ubuntu/apps/TripFlow/TripFlow-backend
-        run: |
           docker compose \
             --project-directory /home/ubuntu/apps/TripFlow/TripFlow-backend \
             --env-file /home/ubuntu/apps/TripFlow/shared/env/backend.env \
             -f /home/ubuntu/apps/TripFlow/TripFlow-backend/docker-compose.prod.yml \
-            restart nginx
+            up -d --build mysql backend
+
+      - name: Wait for backend
+        working-directory: /home/ubuntu/apps/TripFlow/TripFlow-backend
+        run: |
+          set -euo pipefail
+
+          COMPOSE_CMD=(
+            docker compose
+            --project-directory /home/ubuntu/apps/TripFlow/TripFlow-backend
+            --env-file /home/ubuntu/apps/TripFlow/shared/env/backend.env
+            -f /home/ubuntu/apps/TripFlow/TripFlow-backend/docker-compose.prod.yml
+          )
+
+          for i in $(seq 1 40); do
+            container_status="$(
+              docker inspect \
+                --format='{{.State.Status}}' \
+                tripflow-backend 2>/dev/null || true
+            )"
+
+            echo "Attempt $i/40 - backend status: $container_status"
+
+            if [ "$container_status" = "running" ] && \
+               "${COMPOSE_CMD[@]}" logs --no-color backend \
+                 | grep -q "Started TripFlowBackendApplication"; then
+              echo "Backend is ready."
+              exit 0
+            fi
+
+            if [ "$container_status" = "exited" ] || \
+               [ "$container_status" = "dead" ] || \
+               [ "$container_status" = "restarting" ]; then
+              echo "Backend failed to start."
+              "${COMPOSE_CMD[@]}" logs --tail=200 backend
+              exit 1
+            fi
+
+            sleep 3
+          done
+
+          echo "Backend startup timed out."
+          "${COMPOSE_CMD[@]}" logs --tail=200 backend
+          exit 1
 
       - name: Validate Nginx configuration
         working-directory: /home/ubuntu/apps/TripFlow/TripFlow-backend
         run: |
+          set -euo pipefail
+
           docker compose \
             --project-directory /home/ubuntu/apps/TripFlow/TripFlow-backend \
             --env-file /home/ubuntu/apps/TripFlow/shared/env/backend.env \
             -f /home/ubuntu/apps/TripFlow/TripFlow-backend/docker-compose.prod.yml \
-            exec -T nginx nginx -t
+            run --rm --no-deps nginx nginx -t
+
+      - name: Recreate Nginx
+        working-directory: /home/ubuntu/apps/TripFlow/TripFlow-backend
+        run: |
+          set -euo pipefail
+
+          docker compose \
+            --project-directory /home/ubuntu/apps/TripFlow/TripFlow-backend \
+            --env-file /home/ubuntu/apps/TripFlow/shared/env/backend.env \
+            -f /home/ubuntu/apps/TripFlow/TripFlow-backend/docker-compose.prod.yml \
+            up -d --force-recreate nginx
+
+      - name: Wait for Nginx
+        working-directory: /home/ubuntu/apps/TripFlow/TripFlow-backend
+        run: |
+          set -euo pipefail
+
+          COMPOSE_CMD=(
+            docker compose
+            --project-directory /home/ubuntu/apps/TripFlow/TripFlow-backend
+            --env-file /home/ubuntu/apps/TripFlow/shared/env/backend.env
+            -f /home/ubuntu/apps/TripFlow/TripFlow-backend/docker-compose.prod.yml
+          )
+
+          for i in $(seq 1 30); do
+            status="$(
+              docker inspect \
+                --format='{{.State.Status}}' \
+                tripflow-nginx 2>/dev/null || true
+            )"
+
+            echo "Attempt $i/30 - nginx status: $status"
+
+            if [ "$status" = "running" ]; then
+              sleep 3
+
+              status="$(
+                docker inspect \
+                  --format='{{.State.Status}}' \
+                  tripflow-nginx 2>/dev/null || true
+              )"
+
+              if [ "$status" = "running" ]; then
+                echo "Nginx is running."
+                exit 0
+              fi
+            fi
+
+            if [ "$status" = "exited" ] || \
+               [ "$status" = "dead" ] || \
+               [ "$status" = "restarting" ]; then
+              "${COMPOSE_CMD[@]}" logs --tail=100 nginx
+            fi
+
+            sleep 2
+          done
+
+          echo "Nginx startup timed out."
+          "${COMPOSE_CMD[@]}" logs --tail=200 nginx
+          exit 1
 
       - name: Verify backend connection from Nginx
         working-directory: /home/ubuntu/apps/TripFlow/TripFlow-backend
         run: |
-          response="$(
-            docker compose \
-              --project-directory /home/ubuntu/apps/TripFlow/TripFlow-backend \
-              --env-file /home/ubuntu/apps/TripFlow/shared/env/backend.env \
-              -f /home/ubuntu/apps/TripFlow/TripFlow-backend/docker-compose.prod.yml \
-              exec -T nginx \
-              wget -qSO- http://backend:8080/ -O /dev/null 2>&1 \
-              | head -n 1
-          )"
+          set -euo pipefail
 
-          echo "$response"
+          COMPOSE_CMD=(
+            docker compose
+            --project-directory /home/ubuntu/apps/TripFlow/TripFlow-backend
+            --env-file /home/ubuntu/apps/TripFlow/shared/env/backend.env
+            -f /home/ubuntu/apps/TripFlow/TripFlow-backend/docker-compose.prod.yml
+          )
 
-          echo "$response" | grep -E \
-            "HTTP/1\.[01] (200|201|204|301|302|400|401|403|404)"
+          for i in $(seq 1 20); do
+            response="$(
+              "${COMPOSE_CMD[@]}" exec -T nginx \
+                wget -qSO- http://backend:8080/ -O /dev/null 2>&1 \
+                | head -n 1 || true
+            )"
+
+            echo "Attempt $i/20 - $response"
+
+            if echo "$response" | grep -Eq \
+              'HTTP/1\.[01] (200|201|204|301|302|400|401|403|404)'; then
+              echo "Nginx can connect to the backend."
+              exit 0
+            fi
+
+            sleep 3
+          done
+
+          echo "Nginx could not connect to the backend."
+          "${COMPOSE_CMD[@]}" logs --tail=200 backend nginx
+          exit 1
+
+      - name: Verify HTTPS endpoint
+        run: |
+          set -euo pipefail
+
+          for i in $(seq 1 20); do
+            status_code="$(
+              curl \
+                --silent \
+                --show-error \
+                --output /dev/null \
+                --write-out '%{http_code}' \
+                https://tripflowapi.duckdns.org/ \
+                || true
+            )"
+
+            echo "Attempt $i/20 - HTTPS status: $status_code"
+
+            case "$status_code" in
+              200|201|204|301|302|400|401|403|404)
+                echo "HTTPS endpoint is reachable."
+                exit 0
+                ;;
+            esac
+
+            sleep 3
+          done
+
+          echo "HTTPS endpoint verification failed."
+          exit 1
 
       - name: Show container status
         working-directory: /home/ubuntu/apps/TripFlow/TripFlow-backend
@@ -103,4 +259,10 @@ jobs:
             --project-directory /home/ubuntu/apps/TripFlow/TripFlow-backend \
             --env-file /home/ubuntu/apps/TripFlow/shared/env/backend.env \
             -f /home/ubuntu/apps/TripFlow/TripFlow-backend/docker-compose.prod.yml \
-            logs --tail=200
+            ps
+
+          docker compose \
+            --project-directory /home/ubuntu/apps/TripFlow/TripFlow-backend \
+            --env-file /home/ubuntu/apps/TripFlow/shared/env/backend.env \
+            -f /home/ubuntu/apps/TripFlow/TripFlow-backend/docker-compose.prod.yml \
+            logs --tail=200 mysql backend nginx
