@@ -6,47 +6,101 @@ on:
       - main
     paths:
       - "TripFlow-backend/**"
-      - ".github/workflows/deploy.yml"
+      - ".github/workflows/deploy-backend.yml"
 
 jobs:
   deploy:
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-
-    defaults:
-      run:
-        working-directory: TripFlow-backend
+    runs-on: [self-hosted, linux, x64]
 
     steps:
-      - name: Checkout source
+      - name: Checkout backend only
         uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            TripFlow-backend
+          sparse-checkout-cone-mode: true
+          fetch-depth: 1
 
-      - name: Create environment file
+      - name: Sync backend source
         run: |
-          cat > .env <<EOF
-          MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}
-          MYSQL_DATABASE=traveling
-          MYSQL_USER=tripflow
-          MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }}
-          EOF
+          mkdir -p /home/ubuntu/apps/TripFlow/TripFlow-backend
 
-      - name: Validate compose
-        run: docker compose config --quiet
+          rsync -av --delete \
+            --exclude='.env' \
+            --exclude='.env.*' \
+            --exclude='certbot/' \
+            TripFlow-backend/ \
+            /home/ubuntu/apps/TripFlow/TripFlow-backend/
 
-      - name: Build containers
-        run: docker compose build
+      - name: Validate production configuration
+        working-directory: /home/ubuntu/apps/TripFlow/TripFlow-backend
+        run: |
+          docker compose \
+            --project-directory /home/ubuntu/apps/TripFlow/TripFlow-backend \
+            --env-file /home/ubuntu/apps/TripFlow/shared/env/backend.env \
+            -f /home/ubuntu/apps/TripFlow/TripFlow-backend/docker-compose.prod.yml \
+            config --quiet
 
-      - name: Start containers
-        run: docker compose up -d
+      - name: Deploy containers
+        working-directory: /home/ubuntu/apps/TripFlow/TripFlow-backend
+        run: |
+          docker compose \
+            --project-directory /home/ubuntu/apps/TripFlow/TripFlow-backend \
+            --env-file /home/ubuntu/apps/TripFlow/shared/env/backend.env \
+            -f /home/ubuntu/apps/TripFlow/TripFlow-backend/docker-compose.prod.yml \
+            up -d --build
 
-      - name: Validate Nginx
-        run: docker compose exec -T nginx nginx -t
+      - name: Restart Nginx
+        working-directory: /home/ubuntu/apps/TripFlow/TripFlow-backend
+        run: |
+          docker compose \
+            --project-directory /home/ubuntu/apps/TripFlow/TripFlow-backend \
+            --env-file /home/ubuntu/apps/TripFlow/shared/env/backend.env \
+            -f /home/ubuntu/apps/TripFlow/TripFlow-backend/docker-compose.prod.yml \
+            restart nginx
+
+      - name: Validate Nginx configuration
+        working-directory: /home/ubuntu/apps/TripFlow/TripFlow-backend
+        run: |
+          docker compose \
+            --project-directory /home/ubuntu/apps/TripFlow/TripFlow-backend \
+            --env-file /home/ubuntu/apps/TripFlow/shared/env/backend.env \
+            -f /home/ubuntu/apps/TripFlow/TripFlow-backend/docker-compose.prod.yml \
+            exec -T nginx nginx -t
+
+      - name: Verify backend connection from Nginx
+        working-directory: /home/ubuntu/apps/TripFlow/TripFlow-backend
+        run: |
+          response="$(
+            docker compose \
+              --project-directory /home/ubuntu/apps/TripFlow/TripFlow-backend \
+              --env-file /home/ubuntu/apps/TripFlow/shared/env/backend.env \
+              -f /home/ubuntu/apps/TripFlow/TripFlow-backend/docker-compose.prod.yml \
+              exec -T nginx \
+              wget -qSO- http://backend:8080/ -O /dev/null 2>&1 \
+              | head -n 1
+          )"
+
+          echo "$response"
+
+          echo "$response" | grep -E \
+            "HTTP/1\.[01] (200|201|204|301|302|400|401|403|404)"
 
       - name: Show container status
-        run: docker compose ps
+        working-directory: /home/ubuntu/apps/TripFlow/TripFlow-backend
+        run: |
+          docker compose \
+            --project-directory /home/ubuntu/apps/TripFlow/TripFlow-backend \
+            --env-file /home/ubuntu/apps/TripFlow/shared/env/backend.env \
+            -f /home/ubuntu/apps/TripFlow/TripFlow-backend/docker-compose.prod.yml \
+            ps
 
-      - name: Show recent logs on failure
+      - name: Show logs on failure
         if: failure()
-        run: docker compose logs --tail=100
+        working-directory: /home/ubuntu/apps/TripFlow/TripFlow-backend
+        run: |
+          docker compose \
+            --project-directory /home/ubuntu/apps/TripFlow/TripFlow-backend \
+            --env-file /home/ubuntu/apps/TripFlow/shared/env/backend.env \
+            -f /home/ubuntu/apps/TripFlow/TripFlow-backend/docker-compose.prod.yml \
+            logs --tail=200
