@@ -2,6 +2,9 @@ spring:
   application:
     name: TripFlow-backend
 
+  profiles:
+    default: local
+
   datasource:
     url: jdbc:mysql://mysql:3306/traveling?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
     username: root
