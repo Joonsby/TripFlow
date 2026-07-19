@@ -1,8 +1,4 @@
 spring:
-  config:
-    activate:
-      on-profile: local
-    import : optional:file:.env[.properties]
   application:
     name: TripFlow-backend
 
@@ -27,3 +23,11 @@ mybatis:
 
 server:
   port: ${SERVER_PORT:8080}
+
+---
+# local 프로필에서만 .env 파일 읽기
+spring:
+  config:
+    activate:
+      on-profile: local
+    import: optional:file:.env[.properties]
