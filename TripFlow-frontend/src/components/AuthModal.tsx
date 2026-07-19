@@ -4,9 +4,9 @@ import {
   checkEmailAvailability,
   login,
   signup,
-  type LoginResponse,
   type SignupRequest,
 } from '../api/auth'
+import { useAuthStore } from '../stores/authStore'
 import googleLogo from '../assets/google.png'
 import kakaoLogo from '../assets/kakao.png'
 import logo from '../assets/logo.png'
@@ -25,7 +25,6 @@ type EmailAvailabilityStatus =
 type AuthModalProps = {
   initialMode?: AuthMode
   onClose: () => void
-  onLoginSuccess: (user: LoginResponse) => void
 }
 
 type SignupFieldErrors = Partial<
@@ -50,8 +49,8 @@ const socialProviders = [
 function AuthModal({
   initialMode = 'login',
   onClose,
-  onLoginSuccess,
 }: AuthModalProps) {
+  const setAuth = useAuthStore((state) => state.setAuth)
   const [mode, setMode] = useState<AuthMode>(initialMode)
   const [notice, setNotice] = useState('')
   const [loginEmail, setLoginEmail] = useState('')
@@ -121,11 +120,11 @@ function AuthModal({
     loginRequestInFlight.current = true
     setIsLoggingIn(true)
     try {
-      const user = await login({
+      const response = await login({
         email: normalizedEmail,
         password: loginPassword,
       })
-      onLoginSuccess(user)
+      setAuth(response.accessToken, response.user)
       setMode('loginComplete')
     } catch (error: unknown) {
       if (

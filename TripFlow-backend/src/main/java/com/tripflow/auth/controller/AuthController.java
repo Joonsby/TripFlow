@@ -1,11 +1,13 @@
 package com.tripflow.auth.controller;
 
+import com.tripflow.auth.cookie.RefreshTokenCookieProvider;
 import com.tripflow.auth.dto.*;
 import com.tripflow.auth.service.AuthService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -20,6 +22,7 @@ import java.util.Locale;
 public class AuthController {
 
     private final AuthService authService;
+    private final RefreshTokenCookieProvider cookieProvider;
 
     @GetMapping("/email-availability")
     public EmailAvailabilityResponse checkEmailAvailability(
@@ -49,8 +52,16 @@ public class AuthController {
     public ResponseEntity<LoginResponse> login(
             @Valid @RequestBody LoginRequest request
     ) {
-        LoginResponse response = authService.login(request);
+        LoginResult result = authService.login(request);
+        String cookie = cookieProvider
+                .create(
+                        result.refreshToken(),
+                        result.refreshTokenMaxAgeSeconds()
+                )
+                .toString();
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, cookie)
+                .body(result.response());
     }
 }

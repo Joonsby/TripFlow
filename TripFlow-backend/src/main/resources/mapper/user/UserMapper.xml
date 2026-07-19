@@ -7,56 +7,46 @@
 
     <select id="existsByEmail" parameterType="string" resultType="boolean">
         SELECT EXISTS (
-        SELECT 1
-        FROM user_info
-        WHERE email = #{email}
+            SELECT 1
+            FROM user_info
+            WHERE email = #{email}
         )
     </select>
 
-    <select id="existsByPhoneNumber"
-            resultType="boolean">
+    <select id="existsByPhoneNumber" resultType="boolean">
         SELECT EXISTS (
-        SELECT 1
-        FROM user_info
-        WHERE phone_number = #{phoneNumber}
+            SELECT 1
+            FROM user_info
+            WHERE phone_number = #{phoneNumber}
         )
     </select>
 
-    <select id="findByEmail"
-            resultType="com.tripflow.user.domain.User">
-
+    <select id="findByEmail" resultType="com.tripflow.user.domain.User">
         SELECT
-        user_id,
-        password_hash,
-        name,
-        phone_number,
-        email
+            user_id,
+            password_hash,
+            name,
+            phone_number,
+            email
         FROM user_info
         WHERE email = #{email}
-
     </select>
 
-    <insert id="insertUser"
-            parameterType="com.tripflow.user.domain.User"
-            useGeneratedKeys="true"
-            keyProperty="userId"
-            keyColumn="user_id">
-
+    <insert id="insertUser" parameterType="com.tripflow.user.domain.User" useGeneratedKeys="true" keyProperty="userId" keyColumn="user_id">
         INSERT INTO user_info (
-        password_hash,
-        name,
-        phone_number,
-        email,
-        join_date
+            password_hash,
+            name,
+            phone_number,
+            email,
+            join_date
         )
         VALUES (
-        #{passwordHash},
-        #{name},
-        #{phoneNumber},
-        #{email},
-        NOW()
+            #{passwordHash},
+            #{name},
+            #{phoneNumber},
+            #{email},
+            NOW()
         )
-
     </insert>
 
 </mapper>

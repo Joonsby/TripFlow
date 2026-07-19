@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tripflow.auth.refresh.RefreshTokenMapper">
+    <resultMap id="refreshTokenResultMap" type="com.tripflow.auth.refresh.RefreshToken">
+        <id property="refreshTokenId" column="refresh_token_id"/>
+
+        <result property="userId" column="user_id"/>
+
+        <result property="tokenHash" column="token_hash"/>
+
+        <result property="expiresAt" column="expires_at"/>
+
+        <result property="createdAt" column="created_at"/>
+    </resultMap>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="refreshTokenId">
+        INSERT INTO refresh_token (
+            user_id,
+            token_hash,
+            expires_at
+        )
+        VALUES (
+            #{userId},
+            #{tokenHash},
+            #{expiresAt}
+        )
+    </insert>
+
+    <select id="findByTokenHash" resultMap="refreshTokenResultMap">
+        SELECT
+            refresh_token_id,
+            user_id,
+            token_hash,
+            expires_at,
+            created_at
+        FROM refresh_token
+        WHERE token_hash = #{tokenHash}
+    </select>
+
+    <delete id="deleteByTokenHash">
+        DELETE FROM refresh_token
+        WHERE token_hash = #{tokenHash}
+    </delete>
+
+    <delete id="deleteExpiredTokens">
+        <![CDATA[
+            DELETE FROM refresh_token
+            WHERE expires_at <= CURRENT_TIMESTAMP
+        ]]>
+    </delete>
+
+</mapper>

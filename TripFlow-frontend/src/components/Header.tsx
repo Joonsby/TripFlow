@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import type { LoginResponse } from '../api/auth'
+import type { AuthUser } from '../stores/authStore'
 import DateRangePicker from './DateRangePicker'
 import GuestPicker from './GuestPicker'
 import { headerMessages, type Locale } from '../i18n'
@@ -21,7 +21,7 @@ const languages: Language[] = [
 ]
 
 type HeaderProps = {
-  authenticatedUser: LoginResponse | null
+  authenticatedUser: AuthUser | null
   onAuthClick?: () => void
   onLogout: () => void
 }

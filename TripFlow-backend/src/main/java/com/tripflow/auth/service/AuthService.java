@@ -1,33 +1,36 @@
 package com.tripflow.auth.service;
 
-import com.tripflow.auth.dto.LoginRequest;
-import com.tripflow.auth.dto.LoginResponse;
-import com.tripflow.auth.dto.SignupRequest;
-import com.tripflow.auth.dto.SignupResponse;
+import com.tripflow.auth.config.AuthProperties;
+import com.tripflow.auth.dto.*;
 import com.tripflow.auth.exception.DuplicateEmailException;
 import com.tripflow.auth.exception.DuplicatePhoneNumberException;
 import com.tripflow.auth.exception.InvalidLoginException;
+import com.tripflow.auth.refresh.RefreshToken;
+import com.tripflow.auth.refresh.RefreshTokenMapper;
+import com.tripflow.auth.token.AccessTokenProvider;
+import com.tripflow.auth.token.RefreshTokenProvider;
 import com.tripflow.user.domain.User;
 import com.tripflow.user.mapper.UserMapper;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.Locale;
 
 @Service
+@Transactional(readOnly = true)
+@RequiredArgsConstructor
 public class AuthService {
 
     private final UserMapper userMapper;
-    private final PasswordEncoder passwordEncoder;
+    private final RefreshTokenMapper refreshTokenMapper;
 
-    public AuthService(
-            UserMapper userMapper,
-            PasswordEncoder passwordEncoder
-    ) {
-        this.userMapper = userMapper;
-        this.passwordEncoder = passwordEncoder;
-    }
+    private final PasswordEncoder passwordEncoder;
+    private final AccessTokenProvider accessTokenProvider;
+    private final RefreshTokenProvider refreshTokenProvider;
+    private final AuthProperties authProperties;
 
     public boolean isEmailAvailable(String email) {
         String normalizedEmail = email.trim().toLowerCase(Locale.ROOT);
@@ -75,8 +78,9 @@ public class AuthService {
     }
 
 
-    @Transactional(readOnly = true)
-    public LoginResponse login(LoginRequest request) {
+    @Transactional
+    public LoginResult login(LoginRequest request) {
+
         String email = normalizeEmail(request.email());
 
         User user = userMapper.findByEmail(email);
@@ -94,11 +98,48 @@ public class AuthService {
             throw new InvalidLoginException();
         }
 
-        return new LoginResponse(
-                user.getUserId(),
-                user.getEmail(),
-                user.getName(),
-                user.getPhoneNumber()
+        String accessToken = accessTokenProvider.createAccessToken(user.getUserId(),user.getEmail());
+
+        String refreshToken = refreshTokenProvider.createRefreshToken();
+
+        String refreshTokenHash = refreshTokenProvider.hash(refreshToken);
+
+        LocalDateTime expiresAt = LocalDateTime.now().plusDays(authProperties.refreshTokenDays());
+
+        RefreshToken refreshTokenEntity =
+                RefreshToken.builder()
+                        .userId(user.getUserId())
+                        .tokenHash(refreshTokenHash)
+                        .expiresAt(expiresAt)
+                        .build();
+
+        refreshTokenMapper.insert(refreshTokenEntity);
+
+        LoginUserResponse userResponse =
+                new LoginUserResponse(
+                        user.getUserId(),
+                        user.getEmail(),
+                        user.getName()
+                );
+
+        LoginResponse response =
+                new LoginResponse(
+                        accessToken,
+                        "Bearer",
+                        accessTokenProvider.getExpiresInSeconds(),
+                        userResponse
+                );
+
+        long refreshMaxAgeSeconds =
+                authProperties.refreshTokenDays()
+                        * 24
+                        * 60
+                        * 60;
+
+        return new LoginResult(
+                response,
+                refreshToken,
+                refreshMaxAgeSeconds
         );
     }
 
