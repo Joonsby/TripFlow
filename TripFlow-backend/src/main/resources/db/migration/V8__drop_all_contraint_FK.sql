@@ -1,0 +1,11 @@
+ALTER TABLE `code` DROP FOREIGN KEY `fk_code_group`;
+ALTER TABLE `detail_plan` DROP FOREIGN KEY `fk_detail_plan_planner`;
+ALTER TABLE `favorite_plan` DROP FOREIGN KEY `fk_fav_planner`;
+ALTER TABLE `pending_reservation` DROP FOREIGN KEY `fk_pending_room`;
+ALTER TABLE `planner` DROP FOREIGN KEY `planner_ibfk_1`;
+ALTER TABLE `review_info` DROP FOREIGN KEY `fk_review_reservation`;
+ALTER TABLE `stay_facility` DROP FOREIGN KEY `fk_stay_facility_code`;
+ALTER TABLE `stay_facility` DROP FOREIGN KEY `fk_stay_facility_stay`;
+ALTER TABLE `stay_info` DROP FOREIGN KEY `host_id`;
+ALTER TABLE `stay_info` DROP FOREIGN KEY `stay_info_ibfk_1`;
+ALTER TABLE `wish_list` DROP FOREIGN KEY `room_id`;
