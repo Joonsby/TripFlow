@@ -6,16 +6,16 @@ services:
     env_file:
       - /home/ubuntu/apps/TripFlow/shared/env/backend.env
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
     volumes:
       - mysql_data:/var/lib/mysql
     healthcheck:
       test:
         - CMD-SHELL
-        - mysqladmin ping -h localhost -uroot -p"$${MYSQL_ROOT_PASSWORD}"
+        - mysqladmin ping -h localhost -uroot -p"$${DB_ROOT_PASSWORD}"
       interval: 10s
       timeout: 5s
       retries: 10
