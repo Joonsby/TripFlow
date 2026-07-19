@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import type { Locale } from '../i18n'
 
 type GuestCounts = {
   adults: number
@@ -9,16 +10,12 @@ type GuestCounts = {
 
 type GuestType = keyof GuestCounts
 
-const guestOptions: Array<{
-  type: GuestType
-  label: string
-  description: string
-}> = [
-  { type: 'adults', label: '성인', description: '13세 이상' },
-  { type: 'children', label: '어린이', description: '2~12세' },
-  { type: 'infants', label: '유아', description: '2세 미만' },
-  { type: 'pets', label: '반려동물', description: '보조동물을 동반하시나요?' },
-]
+const guestMessages = {
+  ko: { traveler: '여행자', guest: '게스트', guests: '명', infant: '유아', infants: '명', pet: '반려동물', pets: '마리', select: '인원 선택', decrease: '줄이기', increase: '늘리기', options: { adults: ['성인', '13세 이상'], children: ['어린이', '2~12세'], infants: ['유아', '2세 미만'], pets: ['반려동물', '보조동물을 동반하시나요?'] } },
+  en: { traveler: 'Travelers', guest: 'Guests', guests: '', infant: 'Infants', infants: '', pet: 'Pets', pets: '', select: 'Select guests', decrease: 'decrease', increase: 'increase', options: { adults: ['Adults', 'Age 13+'], children: ['Children', 'Ages 2–12'], infants: ['Infants', 'Under 2'], pets: ['Pets', 'Are you bringing a service animal?'] } },
+  ja: { traveler: '旅行者', guest: 'ゲスト', guests: '名', infant: '乳幼児', infants: '名', pet: 'ペット', pets: '匹', select: '人数を選択', decrease: '減らす', increase: '増やす', options: { adults: ['大人', '13歳以上'], children: ['子ども', '2～12歳'], infants: ['乳幼児', '2歳未満'], pets: ['ペット', '介助動物を同伴しますか？'] } },
+  zh: { traveler: '旅行者', guest: '房客', guests: '位', infant: '婴幼儿', infants: '位', pet: '宠物', pets: '只', select: '选择人数', decrease: '减少', increase: '增加', options: { adults: ['成人', '13岁及以上'], children: ['儿童', '2至12岁'], infants: ['婴幼儿', '2岁以下'], pets: ['宠物', '是否携带服务性动物？'] } },
+} satisfies Record<Locale, { traveler: string; guest: string; guests: string; infant: string; infants: string; pet: string; pets: string; select: string; decrease: string; increase: string; options: Record<GuestType, [string, string]> }>
 
 const maximumGuests: Record<GuestType, number> = {
   adults: 15,
@@ -27,7 +24,7 @@ const maximumGuests: Record<GuestType, number> = {
   pets: 5,
 }
 
-function GuestPicker() {
+function GuestPicker({ locale }: { locale: Locale }) {
   const [counts, setCounts] = useState<GuestCounts>({
     adults: 2,
     children: 0,
@@ -72,10 +69,11 @@ function GuestPicker() {
   }
 
   const totalGuests = counts.adults + counts.children
+  const t = guestMessages[locale]
   const summary = [
-    `게스트 ${totalGuests}명`,
-    counts.infants ? `유아 ${counts.infants}명` : '',
-    counts.pets ? `반려동물 ${counts.pets}마리` : '',
+    `${t.guest} ${totalGuests}${t.guests}`,
+    counts.infants ? `${t.infant} ${counts.infants}${t.infants}` : '',
+    counts.pets ? `${t.pet} ${counts.pets}${t.pets}` : '',
   ]
     .filter(Boolean)
     .join(', ')
@@ -88,7 +86,7 @@ function GuestPicker() {
         aria-expanded={isOpen}
         onClick={() => setIsOpen((open) => !open)}
       >
-        <span>여행자</span>
+        <span>{t.traveler}</span>
         <strong>{summary}</strong>
       </button>
 
@@ -99,30 +97,31 @@ function GuestPicker() {
       <input type="hidden" name="pets" value={counts.pets} />
 
       {isOpen && (
-        <div className="guest-picker-popover" role="dialog" aria-label="인원 선택">
-          {guestOptions.map((option) => {
-            const minimum = option.type === 'adults' ? 1 : 0
+        <div className="guest-picker-popover" role="dialog" aria-label={t.select}>
+          {(Object.keys(t.options) as GuestType[]).map((type) => {
+            const [label, description] = t.options[type]
+            const minimum = type === 'adults' ? 1 : 0
             return (
-              <div className="guest-picker-row" key={option.type}>
+              <div className="guest-picker-row" key={type}>
                 <div className="guest-picker-copy">
-                  <strong>{option.label}</strong>
-                  <span>{option.description}</span>
+                  <strong>{label}</strong>
+                  <span>{description}</span>
                 </div>
                 <div className="guest-picker-controls">
                   <button
                     type="button"
-                    aria-label={`${option.label} 줄이기`}
-                    disabled={counts[option.type] <= minimum}
-                    onClick={() => updateCount(option.type, -1)}
+                    aria-label={`${label} ${t.decrease}`}
+                    disabled={counts[type] <= minimum}
+                    onClick={() => updateCount(type, -1)}
                   >
                     −
                   </button>
-                  <output aria-live="polite">{counts[option.type]}</output>
+                  <output aria-live="polite">{counts[type]}</output>
                   <button
                     type="button"
-                    aria-label={`${option.label} 늘리기`}
-                    disabled={counts[option.type] >= maximumGuests[option.type]}
-                    onClick={() => updateCount(option.type, 1)}
+                    aria-label={`${label} ${t.increase}`}
+                    disabled={counts[type] >= maximumGuests[type]}
+                    onClick={() => updateCount(type, 1)}
                   >
                     +
                   </button>

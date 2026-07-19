@@ -2,13 +2,14 @@ import { useEffect, useRef, useState } from 'react'
 import type { LoginResponse } from '../api/auth'
 import DateRangePicker from './DateRangePicker'
 import GuestPicker from './GuestPicker'
+import { headerMessages, type Locale } from '../i18n'
 import logo from '../assets/logo.png'
 import './Header.css'
 
 type Theme = 'light' | 'dark'
 
 type Language = {
-  code: string
+  code: Locale
   label: string
 }
 
@@ -27,7 +28,10 @@ type HeaderProps = {
 
 function Header({ authenticatedUser, onAuthClick, onLogout }: HeaderProps) {
   const [theme, setTheme] = useState<Theme>('light')
-  const [selectedLanguage, setSelectedLanguage] = useState(languages[0])
+  const [selectedLanguage, setSelectedLanguage] = useState(() => {
+    const savedLocale = localStorage.getItem('tripflow-language') as Locale | null
+    return languages.find(({ code }) => code === savedLocale) ?? languages[0]
+  })
   const [isLanguageOpen, setIsLanguageOpen] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
@@ -39,6 +43,11 @@ function Header({ authenticatedUser, onAuthClick, onLogout }: HeaderProps) {
   useEffect(() => {
     document.documentElement.dataset.theme = theme
   }, [theme])
+
+  useEffect(() => {
+    document.documentElement.lang = selectedLanguage.code
+    localStorage.setItem('tripflow-language', selectedLanguage.code)
+  }, [selectedLanguage])
 
   useEffect(() => {
     if (!isMobileMenuOpen) return
@@ -112,10 +121,11 @@ function Header({ authenticatedUser, onAuthClick, onLogout }: HeaderProps) {
   }
 
   const isDarkMode = theme === 'dark'
+  const t = headerMessages[selectedLanguage.code]
 
   return (
     <header className="site-header">
-      <nav className="header-nav" aria-label="주요 메뉴">
+      <nav className="header-nav" aria-label={t.mainMenu}>
         <a className="header-logo" href="/" aria-label="TripFlow 홈">
           <img src={logo} alt="TripFlow" />
         </a>
@@ -124,7 +134,7 @@ function Header({ authenticatedUser, onAuthClick, onLogout }: HeaderProps) {
           ref={mobileMenuButtonRef}
           type="button"
           className="mobile-menu-button"
-          aria-label={isMobileMenuOpen ? '메뉴 닫기' : '메뉴 열기'}
+          aria-label={isMobileMenuOpen ? t.closeMenu : t.openMenu}
           aria-expanded={isMobileMenuOpen}
           aria-controls="mobile-header-menu"
           onClick={() => setIsMobileMenuOpen((isOpen) => !isOpen)}
@@ -137,7 +147,7 @@ function Header({ authenticatedUser, onAuthClick, onLogout }: HeaderProps) {
         <button
           type="button"
           className={`mobile-menu-backdrop${isMobileMenuOpen ? ' is-open' : ''}`}
-          aria-label="메뉴 닫기"
+          aria-label={t.closeMenu}
           tabIndex={isMobileMenuOpen ? 0 : -1}
           onClick={() => setIsMobileMenuOpen(false)}
         />
@@ -147,26 +157,38 @@ function Header({ authenticatedUser, onAuthClick, onLogout }: HeaderProps) {
           id="mobile-header-menu"
           className={`header-menu-panel${isMobileMenuOpen ? ' is-open' : ''}`}
         >
-          <a className="sidebar-logo" href="/" aria-label="TripFlow 홈">
-            <img src={logo} alt="TripFlow" />
-          </a>
+          <div className="sidebar-header">
+            <a className="sidebar-logo" href="/" aria-label="TripFlow 홈">
+              <img src={logo} alt="TripFlow" />
+            </a>
+            <button
+              type="button"
+              className="sidebar-close-button"
+              aria-label={t.closeMenu}
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M6 6l12 12M18 6 6 18" />
+              </svg>
+            </button>
+          </div>
 
-        <form className="header-search" aria-label="숙소 검색">
+        <form className="header-search" aria-label={t.accommodationSearch}>
           <label className="search-field">
-            <span>여행지</span>
-            <input type="text" name="location" placeholder="여행지 검색" />
+            <span>{t.destination}</span>
+            <input type="text" name="location" placeholder={t.destinationSearch} />
           </label>
 
-          <DateRangePicker />
+          <DateRangePicker locale={selectedLanguage.code} />
 
-          <GuestPicker />
+          <GuestPicker locale={selectedLanguage.code} />
 
           <button className="search-button" type="submit">
-            검색
+            {t.search}
           </button>
         </form>
 
-        <div className="header-actions" aria-label="사용자 메뉴">
+        <div className="header-actions" aria-label={t.userMenu}>
           {authenticatedUser ? (
             <div className="authenticated-actions">
               <div className="profile-menu" ref={profileMenuRef}>
@@ -192,10 +214,10 @@ function Header({ authenticatedUser, onAuthClick, onLogout }: HeaderProps) {
 
                 {isProfileOpen && (
                   <div className="profile-dropdown" role="menu">
-                    <button type="button" role="menuitem" onClick={() => navigate('/mypage')}>마이페이지</button>
-                    <button type="button" role="menuitem" onClick={() => navigate('/reservations')}>예약 내역</button>
-                    <button type="button" role="menuitem" onClick={() => navigate('/wishlist')}>찜한 숙소</button>
-                    <button type="button" role="menuitem" onClick={() => navigate('/trips')}>여행 일정</button>
+                    <button type="button" role="menuitem" onClick={() => navigate('/mypage')}>{t.myPage}</button>
+                    <button type="button" role="menuitem" onClick={() => navigate('/reservations')}>{t.reservations}</button>
+                    <button type="button" role="menuitem" onClick={() => navigate('/wishlist')}>{t.wishlist}</button>
+                    <button type="button" role="menuitem" onClick={() => navigate('/trips')}>{t.trips}</button>
                     <span className="profile-dropdown-divider" aria-hidden="true" />
                     <button
                       type="button"
@@ -207,7 +229,7 @@ function Header({ authenticatedUser, onAuthClick, onLogout }: HeaderProps) {
                         onLogout()
                       }}
                     >
-                      로그아웃
+                      {t.logout}
                     </button>
                   </div>
                 )}
@@ -222,7 +244,7 @@ function Header({ authenticatedUser, onAuthClick, onLogout }: HeaderProps) {
                 onAuthClick?.()
               }}
             >
-              로그인 또는 회원가입
+              {t.auth}
             </button>
           )}
 
@@ -230,7 +252,7 @@ function Header({ authenticatedUser, onAuthClick, onLogout }: HeaderProps) {
             <button
               type="button"
               className="language-button"
-              aria-label={`언어 선택: ${selectedLanguage.label}`}
+              aria-label={`${t.language}: ${selectedLanguage.label}`}
               aria-haspopup="listbox"
               aria-expanded={isLanguageOpen}
               onClick={() => setIsLanguageOpen((isOpen) => !isOpen)}
@@ -244,7 +266,7 @@ function Header({ authenticatedUser, onAuthClick, onLogout }: HeaderProps) {
                 <path d="M3 12h18M12 3c3 3.2 3 14.8 0 18M12 3c-3 3.2-3 14.8 0 18" />
               </svg>
               <span className="mobile-action-label">
-                언어 선택: {selectedLanguage.label}
+                {t.language}: {selectedLanguage.label}
               </span>
             </button>
 
@@ -272,7 +294,7 @@ function Header({ authenticatedUser, onAuthClick, onLogout }: HeaderProps) {
           <button
             type="button"
             className="theme-toggle"
-            aria-label={isDarkMode ? '화이트 모드로 변경' : '다크 모드로 변경'}
+            aria-label={isDarkMode ? t.lightMode : t.darkMode}
             aria-pressed={isDarkMode}
             onClick={() => setTheme(isDarkMode ? 'light' : 'dark')}
           >
@@ -295,7 +317,7 @@ function Header({ authenticatedUser, onAuthClick, onLogout }: HeaderProps) {
               </svg>
             )}
             <span className="mobile-action-label">
-              {isDarkMode ? '라이트 모드로 전환' : '다크 모드로 전환'}
+              {isDarkMode ? t.lightMode : t.darkMode}
             </span>
           </button>
         </div>

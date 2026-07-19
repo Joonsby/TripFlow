@@ -1,11 +1,17 @@
 import { useEffect, useRef, useState } from 'react'
+import { localeTags, type Locale } from '../i18n'
 
 type DateRange = {
   start: Date | null
   end: Date | null
 }
 
-const weekDays = ['일', '월', '화', '수', '목', '금', '토']
+const dateMessages = {
+  ko: { date: '날짜', selectDate: '날짜 선택', selectEnd: '종료일 선택', selectRange: '날짜 범위 선택', previous: '이전 달', next: '다음 달' },
+  en: { date: 'Dates', selectDate: 'Select dates', selectEnd: 'Select checkout', selectRange: 'Select date range', previous: 'Previous month', next: 'Next month' },
+  ja: { date: '日付', selectDate: '日付を選択', selectEnd: '終了日を選択', selectRange: '日付範囲を選択', previous: '前の月', next: '次の月' },
+  zh: { date: '日期', selectDate: '选择日期', selectEnd: '选择结束日期', selectRange: '选择日期范围', previous: '上个月', next: '下个月' },
+} satisfies Record<Locale, Record<string, string>>
 
 const startOfDay = (date: Date) =>
   new Date(date.getFullYear(), date.getMonth(), date.getDate())
@@ -21,10 +27,12 @@ const toInputValue = (date: Date | null) => {
   return `${year}-${month}-${day}`
 }
 
-const formatDisplayDate = (date: Date | null) =>
+const formatDisplayDate = (date: Date | null, locale: Locale, fallback: string) =>
   date
-    ? `${date.getFullYear()}. ${date.getMonth() + 1}. ${date.getDate()}.`
-    : '날짜 선택'
+    ? new Intl.DateTimeFormat(localeTags[locale], {
+        year: 'numeric', month: 'short', day: 'numeric',
+      }).format(date)
+    : fallback
 
 const isSameDay = (left: Date | null, right: Date | null) =>
   Boolean(left && right && left.getTime() === right.getTime())
@@ -33,6 +41,7 @@ type CalendarMonthProps = {
   month: Date
   range: DateRange
   minimumDate: Date
+  locale: Locale
   onSelect: (date: Date) => void
 }
 
@@ -40,8 +49,14 @@ function CalendarMonth({
   month,
   range,
   minimumDate,
+  locale,
   onSelect,
 }: CalendarMonthProps) {
+  const weekDays = Array.from({ length: 7 }, (_, day) =>
+    new Intl.DateTimeFormat(localeTags[locale], { weekday: 'narrow' }).format(
+      new Date(2024, 0, 7 + day),
+    ),
+  )
   const firstWeekDay = new Date(month.getFullYear(), month.getMonth(), 1).getDay()
   const daysInMonth = new Date(
     month.getFullYear(),
@@ -57,7 +72,7 @@ function CalendarMonth({
 
   return (
     <section className="date-range-month">
-      <h3>{`${month.getFullYear()}년 ${month.getMonth() + 1}월`}</h3>
+      <h3>{new Intl.DateTimeFormat(localeTags[locale], { year: 'numeric', month: 'long' }).format(month)}</h3>
       <div className="date-range-weekdays" aria-hidden="true">
         {weekDays.map((day) => (
           <span key={day}>{day}</span>
@@ -98,7 +113,7 @@ function CalendarMonth({
   )
 }
 
-function DateRangePicker() {
+function DateRangePicker({ locale }: { locale: Locale }) {
   const minimumDate = startOfDay(new Date())
   const initialEnd = new Date(minimumDate)
   initialEnd.setDate(initialEnd.getDate() + 1)
@@ -146,9 +161,10 @@ function DateRangePicker() {
     setRange({ start: range.start, end: date })
   }
 
+  const t = dateMessages[locale]
   const rangeLabel = range.end
-    ? `${formatDisplayDate(range.start)} - ${formatDisplayDate(range.end)}`
-    : `${formatDisplayDate(range.start)} - 종료일 선택`
+    ? `${formatDisplayDate(range.start, locale, t.selectDate)} - ${formatDisplayDate(range.end, locale, t.selectDate)}`
+    : `${formatDisplayDate(range.start, locale, t.selectDate)} - ${t.selectEnd}`
 
   return (
     <div className="date-range-picker" ref={pickerRef}>
@@ -158,8 +174,8 @@ function DateRangePicker() {
         aria-expanded={isOpen}
         onClick={() => setIsOpen((open) => !open)}
       >
-        <span className="date-range-label-desktop">날짜</span>
-        <span className="date-range-label-mobile">날짜 선택</span>
+        <span className="date-range-label-desktop">{t.date}</span>
+        <span className="date-range-label-mobile">{t.selectDate}</span>
         <strong>{rangeLabel}</strong>
       </button>
 
@@ -167,11 +183,11 @@ function DateRangePicker() {
       <input type="hidden" name="checkOut" value={toInputValue(range.end)} />
 
       {isOpen && (
-        <div className="date-range-popover" role="dialog" aria-label="날짜 범위 선택">
+        <div className="date-range-popover" role="dialog" aria-label={t.selectRange}>
           <button
             type="button"
             className="date-range-nav date-range-nav-previous"
-            aria-label="이전 달"
+            aria-label={t.previous}
             disabled={visibleMonth <= new Date(minimumDate.getFullYear(), minimumDate.getMonth(), 1)}
             onClick={() => setVisibleMonth((month) => addMonths(month, -1))}
           >
@@ -182,19 +198,21 @@ function DateRangePicker() {
               month={visibleMonth}
               range={range}
               minimumDate={minimumDate}
+              locale={locale}
               onSelect={handleSelect}
             />
             <CalendarMonth
               month={addMonths(visibleMonth, 1)}
               range={range}
               minimumDate={minimumDate}
+              locale={locale}
               onSelect={handleSelect}
             />
           </div>
           <button
             type="button"
             className="date-range-nav date-range-nav-next"
-            aria-label="다음 달"
+            aria-label={t.next}
             onClick={() => setVisibleMonth((month) => addMonths(month, 1))}
           >
             ›
