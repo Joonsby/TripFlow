@@ -16,6 +16,7 @@ bin/
 !**/src/test/**/out/
 !**/src/main/**/bin/
 !**/src/test/**/bin/
+/db
 
 HELP.md
 
