@@ -6,9 +6,9 @@ spring:
     default: local
 
   datasource:
-    url: jdbc:mysql://mysql:3306/traveling?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
-    username: root
-    password: "root1234"
+    url: jdbc:mysql://${DB_HOST}:${DB_PORT}/${DB_NAME}?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   flyway:
@@ -22,4 +22,4 @@ mybatis:
     map-underscore-to-camel-case: true
 
 server:
-  port: 8080
+  port: ${SERVER_PORT:8080}
