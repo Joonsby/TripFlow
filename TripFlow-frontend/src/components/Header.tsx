@@ -3,6 +3,7 @@ import type { AuthUser } from '../stores/authStore'
 import DateRangePicker from './DateRangePicker'
 import GuestPicker from './GuestPicker'
 import { headerMessages, type Locale } from '../i18n'
+import { useLocaleStore } from '../stores/localeStore'
 import logo from '../assets/logo.png'
 import './Header.css'
 
@@ -29,10 +30,9 @@ type HeaderProps = {
 
 function Header({ authenticatedUser, onAuthClick, onLogout, onNavigate }: HeaderProps) {
   const [theme, setTheme] = useState<Theme>('light')
-  const [selectedLanguage, setSelectedLanguage] = useState(() => {
-    const savedLocale = localStorage.getItem('tripflow-language') as Locale | null
-    return languages.find(({ code }) => code === savedLocale) ?? languages[0]
-  })
+  const locale = useLocaleStore((state) => state.locale)
+  const setLocale = useLocaleStore((state) => state.setLocale)
+  const selectedLanguage = languages.find(({ code }) => code === locale) ?? languages[0]
   const [isLanguageOpen, setIsLanguageOpen] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
@@ -47,7 +47,6 @@ function Header({ authenticatedUser, onAuthClick, onLogout, onNavigate }: Header
 
   useEffect(() => {
     document.documentElement.lang = selectedLanguage.code
-    localStorage.setItem('tripflow-language', selectedLanguage.code)
   }, [selectedLanguage])
 
   useEffect(() => {
@@ -278,7 +277,7 @@ function Header({ authenticatedUser, onAuthClick, onLogout, onNavigate }: Header
                     className="language-option"
                     key={language.code}
                     onClick={() => {
-                      setSelectedLanguage(language)
+                      setLocale(language.code)
                       setIsLanguageOpen(false)
                     }}
                   >
