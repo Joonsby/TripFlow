@@ -24,9 +24,10 @@ type HeaderProps = {
   authenticatedUser: AuthUser | null
   onAuthClick?: () => void
   onLogout: () => void
+  onNavigate: (path: string) => void
 }
 
-function Header({ authenticatedUser, onAuthClick, onLogout }: HeaderProps) {
+function Header({ authenticatedUser, onAuthClick, onLogout, onNavigate }: HeaderProps) {
   const [theme, setTheme] = useState<Theme>('light')
   const [selectedLanguage, setSelectedLanguage] = useState(() => {
     const savedLocale = localStorage.getItem('tripflow-language') as Locale | null
@@ -115,7 +116,7 @@ function Header({ authenticatedUser, onAuthClick, onLogout }: HeaderProps) {
   }, [isProfileOpen])
 
   const navigate = (path: string) => {
-    window.history.pushState({}, '', path)
+    onNavigate(path)
     setIsProfileOpen(false)
     setIsMobileMenuOpen(false)
   }
