@@ -99,6 +99,11 @@ const copy: Record<string, Translations> = {
   '이미 사용 중인 이메일입니다.': ['This email is already in use.', 'このメールはすでに使用されています。', '该邮箱已被使用。'],
   '사용 가능한 이메일입니다.': ['This email is available.', '使用可能なメールです。', '该邮箱可用。'],
   '이메일을 확인하고 있습니다.': ['Checking email...', 'メールを確認中です。', '正在检查邮箱...'],
+  '로그아웃되었습니다.': ['You have been logged out.', 'ログアウトしました。', '已退出登录。'],
+  '서버 로그아웃 처리에 실패했습니다. 로컬 로그인 정보는 삭제되었습니다.': ['Server logout failed. Local login information was cleared.', 'サーバーのログアウトに失敗しました。ローカルのログイン情報は削除されました。', '服务器退出登录失败，本地登录信息已清除。'],
+  '로그아웃 하시겠습니까?': ['Would you like to log out?', 'ログアウトしますか？', '确定要退出登录吗？'],
+  '현재 계정에서 로그아웃하고 메인 화면으로 이동합니다.': ['You will be logged out and returned to the home page.', '現在のアカウントからログアウトしてホームに移動します。', '退出当前账户并返回首页。'],
+  '취소': ['Cancel', 'キャンセル', '取消'],
 }
 
 const originals = new WeakMap<Text, string>()

@@ -22,6 +22,83 @@
   .app-auth-checking span { animation: none; }
 }
 
+.app-toast {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 150;
+  max-width: min(420px, calc(100vw - 32px));
+  padding: 14px 18px;
+  color: #fff;
+  background: #14213d;
+  border-radius: 14px;
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.24);
+  font-size: 14px;
+  font-weight: 750;
+}
+
+.app-toast-error { background: #b42318; }
+
+.logout-confirm-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 140;
+  display: grid;
+  padding: 20px;
+  place-items: center;
+}
+
+.logout-confirm-backdrop {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  background: rgba(15, 23, 42, 0.58);
+  border: 0;
+  backdrop-filter: blur(3px);
+}
+
+.logout-confirm-dialog {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 400px);
+  padding: 32px;
+  color: var(--header-text);
+  background: var(--header-panel);
+  border: 1px solid var(--header-border);
+  border-radius: 24px;
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.28);
+  text-align: center;
+}
+
+.logout-confirm-icon {
+  display: grid;
+  width: 54px;
+  height: 54px;
+  margin: 0 auto 18px;
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+  border-radius: 18px;
+  font-size: 28px;
+  font-weight: 800;
+  place-items: center;
+}
+
+.logout-confirm-dialog h2 { margin: 0 0 10px; color: var(--header-text); font-size: 22px; font-weight: 850; }
+.logout-confirm-dialog p { color: var(--header-muted); font-size: 14px; line-height: 1.6; }
+.logout-confirm-actions { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 26px; }
+.logout-confirm-actions button { min-height: 46px; border-radius: 13px; font: inherit; font-size: 14px; font-weight: 800; cursor: pointer; }
+.logout-confirm-cancel { color: var(--header-text); background: var(--header-panel-soft); border: 1px solid var(--header-border); }
+.logout-confirm-submit { color: #fff; background: #ef4444; border: 1px solid #ef4444; }
+.logout-confirm-submit:hover:not(:disabled) { background: #dc2626; }
+.logout-confirm-actions button:disabled { cursor: not-allowed; opacity: 0.65; }
+
+@media (max-width: 540px) {
+  .app-toast { right: 16px; bottom: 16px; left: 16px; max-width: none; }
+  .logout-confirm-dialog { padding: 28px 22px; border-radius: 20px; }
+}
+
 .counter {
   font-size: 16px;
   padding: 5px 10px;

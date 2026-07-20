@@ -24,7 +24,7 @@ const languages: Language[] = [
 type HeaderProps = {
   authenticatedUser: AuthUser | null
   onAuthClick?: () => void
-  onLogout: () => void
+  onLogout: () => Promise<void>
   onNavigate: (path: string) => void
 }
 
@@ -36,6 +36,7 @@ function Header({ authenticatedUser, onAuthClick, onLogout, onNavigate }: Header
   const [isLanguageOpen, setIsLanguageOpen] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
   const languageMenuRef = useRef<HTMLDivElement>(null)
   const mobileMenuButtonRef = useRef<HTMLButtonElement>(null)
   const mobileMenuPanelRef = useRef<HTMLDivElement>(null)
@@ -118,6 +119,19 @@ function Header({ authenticatedUser, onAuthClick, onLogout, onNavigate }: Header
     onNavigate(path)
     setIsProfileOpen(false)
     setIsMobileMenuOpen(false)
+  }
+
+  const handleLogout = async () => {
+    if (isLoggingOut) return
+
+    setIsLoggingOut(true)
+    setIsProfileOpen(false)
+    setIsMobileMenuOpen(false)
+    try {
+      await onLogout()
+    } finally {
+      setIsLoggingOut(false)
+    }
   }
 
   const isDarkMode = theme === 'dark'
@@ -223,13 +237,10 @@ function Header({ authenticatedUser, onAuthClick, onLogout, onNavigate }: Header
                       type="button"
                       role="menuitem"
                       className="profile-logout"
-                      onClick={() => {
-                        setIsProfileOpen(false)
-                        setIsMobileMenuOpen(false)
-                        onLogout()
-                      }}
+                      disabled={isLoggingOut}
+                      onClick={() => void handleLogout()}
                     >
-                      {t.logout}
+                      {isLoggingOut ? t.loggingOut : t.logout}
                     </button>
                   </div>
                 )}

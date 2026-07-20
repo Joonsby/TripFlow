@@ -154,3 +154,9 @@ export function refreshInitialSession(): Promise<RefreshResponse> {
 
   return initialRefreshRequest
 }
+
+export async function logout(): Promise<void> {
+  await apiClient.post<void>('/api/auth/logout', undefined, {
+    withCredentials: true,
+  })
+}
