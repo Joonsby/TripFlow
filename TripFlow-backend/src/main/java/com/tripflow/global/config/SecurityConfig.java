@@ -23,40 +23,33 @@ public class SecurityConfig {
 
         http
                 .csrf(csrf -> csrf.disable())
-
                 .cors(Customizer.withDefaults())
-
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(
                                 SessionCreationPolicy.STATELESS
                         )
                 )
-
                 .authorizeHttpRequests(auth -> auth
-
                         .requestMatchers(
                                 HttpMethod.POST,
                                 "/api/auth/login",
+                                "/api/auth/signup",
                                 "/api/auth/refresh",
+                                "/api/auth/email-availabiliy",
                                 "/api/auth/logout"
                         ).permitAll()
-
                         .requestMatchers(
                                 HttpMethod.POST,
                                 "/api/users"
                         ).permitAll()
-
                         .requestMatchers(
                                 "/api/users/email-check"
                         ).permitAll()
-
                         .anyRequest().authenticated()
                 )
-
                 .oauth2ResourceServer(oauth2 ->
                         oauth2.jwt(Customizer.withDefaults())
                 );
-
         return http.build();
     }
 

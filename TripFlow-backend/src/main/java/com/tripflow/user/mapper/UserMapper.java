@@ -18,4 +18,8 @@ public interface UserMapper {
     );
 
     int insertUser(User user);
+
+    User findById(
+            @Param("userId") Integer userId
+    );
 }

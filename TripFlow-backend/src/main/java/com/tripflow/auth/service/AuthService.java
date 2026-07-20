@@ -5,6 +5,7 @@ import com.tripflow.auth.dto.*;
 import com.tripflow.auth.exception.DuplicateEmailException;
 import com.tripflow.auth.exception.DuplicatePhoneNumberException;
 import com.tripflow.auth.exception.InvalidLoginException;
+import com.tripflow.auth.exception.InvalidRefreshTokenException;
 import com.tripflow.auth.refresh.RefreshToken;
 import com.tripflow.auth.refresh.RefreshTokenMapper;
 import com.tripflow.auth.token.AccessTokenProvider;
@@ -140,6 +141,54 @@ public class AuthService {
                 response,
                 refreshToken,
                 refreshMaxAgeSeconds
+        );
+    }
+
+    @Transactional
+    public RefreshResponse refresh(String refreshToken) {
+
+        if (refreshToken == null || refreshToken.isBlank()) {
+            throw new InvalidRefreshTokenException();
+        }
+
+        String tokenHash = refreshTokenProvider.hash(refreshToken);
+
+        RefreshToken savedToken = refreshTokenMapper.findByTokenHash(tokenHash);
+
+        if (savedToken == null) {
+            throw new InvalidRefreshTokenException();
+        }
+
+        if (savedToken.getExpiresAt().isBefore(LocalDateTime.now())) {
+            refreshTokenMapper.deleteByTokenHash(tokenHash);
+            throw new InvalidRefreshTokenException();
+        }
+
+        User user = userMapper.findById(savedToken.getUserId());
+
+        if (user == null) {
+            refreshTokenMapper.deleteByTokenHash(tokenHash);
+            throw new InvalidRefreshTokenException();
+        }
+
+        String newAccessToken =
+                accessTokenProvider.createAccessToken(
+                        user.getUserId(),
+                        user.getEmail()
+                );
+
+        LoginUserResponse userResponse =
+                new LoginUserResponse(
+                        user.getUserId(),
+                        user.getEmail(),
+                        user.getName()
+                );
+
+        return new RefreshResponse(
+                newAccessToken,
+                "Bearer",
+                accessTokenProvider.getExpiresInSeconds(),
+                userResponse
         );
     }
 

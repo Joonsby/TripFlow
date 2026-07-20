@@ -64,4 +64,13 @@ public class AuthController {
                 .header(HttpHeaders.SET_COOKIE, cookie)
                 .body(result.response());
     }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<RefreshResponse> refreshAccessToken(
+            @CookieValue(name = RefreshTokenCookieProvider.COOKIE_NAME, required = false)
+            String refreshToken
+    ) {
+        RefreshResponse response = authService.refresh(refreshToken);
+        return ResponseEntity.ok(response);
+    }
 }
