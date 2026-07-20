@@ -192,6 +192,16 @@ public class AuthService {
         );
     }
 
+    @Transactional
+    public void logout(String refreshToken){
+        if(refreshToken == null || refreshToken.isBlank()){
+            return;
+        }
+
+        String tokenHash = refreshTokenProvider.hash(refreshToken);
+        refreshTokenMapper.deleteByTokenHash(tokenHash);
+    }
+
     private String normalizeEmail(String email) {
         return email.trim().toLowerCase();
     }
