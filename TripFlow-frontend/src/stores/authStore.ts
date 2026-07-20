@@ -6,7 +6,10 @@ export type AuthUser = {
   name: string
 }
 
+export type AuthStatus = 'checking' | 'authenticated' | 'anonymous'
+
 type AuthState = {
+  status: AuthStatus
   accessToken: string | null
   user: AuthUser | null
   setAuth: (accessToken: string, user: AuthUser) => void
@@ -14,8 +17,11 @@ type AuthState = {
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
+  status: 'checking',
   accessToken: null,
   user: null,
-  setAuth: (accessToken, user) => set({ accessToken, user }),
-  clearAuth: () => set({ accessToken: null, user: null }),
+  setAuth: (accessToken, user) =>
+    set({ status: 'authenticated', accessToken, user }),
+  clearAuth: () =>
+    set({ status: 'anonymous', accessToken: null, user: null }),
 }))

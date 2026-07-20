@@ -7,6 +7,7 @@ import MyPage from './components/MyPage'
 import { useAuthStore } from './stores/authStore'
 import { useLocaleStore } from './stores/localeStore'
 import { useDocumentTranslation } from './hooks/useDocumentTranslation'
+import { refreshInitialSession } from './api/auth'
 import './App.css'
 
 function App() {  
@@ -15,7 +16,9 @@ function App() {
   const [pathname, setPathname] = useState(window.location.pathname)
   const [isAuthOpen, setIsAuthOpen] = useState(false)
   const protectedDestinationRef = useRef<string | null>(null)
+  const authStatus = useAuthStore((state) => state.status)
   const authenticatedUser = useAuthStore((state) => state.user)
+  const setAuth = useAuthStore((state) => state.setAuth)
   const clearAuth = useAuthStore((state) => state.clearAuth)
   const isProtectedPath = pathname === '/mypage' || pathname === '/host/register'
 
@@ -25,12 +28,30 @@ function App() {
   }, [])
 
   useEffect(() => {
+    let isActive = true
+
+    refreshInitialSession()
+      .then((response) => {
+        if (isActive) setAuth(response.accessToken, response.user)
+      })
+      .catch(() => {
+        if (isActive) clearAuth()
+      })
+
+    return () => {
+      isActive = false
+    }
+  }, [clearAuth, setAuth])
+
+  useEffect(() => {
     const handlePopState = () => setPathname(window.location.pathname)
     window.addEventListener('popstate', handlePopState)
     return () => window.removeEventListener('popstate', handlePopState)
   }, [])
 
   useEffect(() => {
+    if (authStatus === 'checking') return
+
     if (isProtectedPath && !authenticatedUser) {
       protectedDestinationRef.current = pathname
       navigate('/login', true)
@@ -39,7 +60,7 @@ function App() {
     }
 
     setIsAuthOpen(pathname === '/login')
-  }, [authenticatedUser, isProtectedPath, navigate, pathname])
+  }, [authenticatedUser, authStatus, isProtectedPath, navigate, pathname])
 
   useEffect(() => {
     if (!authenticatedUser || !protectedDestinationRef.current) return
@@ -71,6 +92,14 @@ function App() {
     }
 
     navigate(path)
+  }
+
+  if (authStatus === 'checking') {
+    return (
+      <div className="app-auth-checking" role="status" aria-label="로그인 상태 확인 중">
+        <span aria-hidden="true" />
+      </div>
+    )
   }
 
   return (

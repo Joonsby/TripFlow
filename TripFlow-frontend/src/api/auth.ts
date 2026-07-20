@@ -26,6 +26,13 @@ export type LoginResponse = {
   user: AuthUser
 }
 
+export type RefreshResponse = {
+  accessToken: string
+  tokenType: string
+  expiresIn: number
+  user: AuthUser
+}
+
 export type EmailAvailabilityResponse = {
   email: string
   available: boolean
@@ -126,9 +133,24 @@ export async function login(request: LoginRequest): Promise<LoginResponse> {
     const response = await apiClient.post<LoginResponse>(
       '/api/auth/login',
       request,
+      { withCredentials: true },
     )
     return response.data
   } catch (error) {
     return toAuthApiError(error)
   }
+}
+
+let initialRefreshRequest: Promise<RefreshResponse> | null = null
+
+export function refreshInitialSession(): Promise<RefreshResponse> {
+  if (!initialRefreshRequest) {
+    initialRefreshRequest = apiClient
+      .post<RefreshResponse>('/api/auth/refresh', undefined, {
+        withCredentials: true,
+      })
+      .then((response) => response.data)
+  }
+
+  return initialRefreshRequest
 }
