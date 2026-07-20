@@ -85,6 +85,7 @@ function AuthModal({
   const loginRequestInFlight = useRef(false)
   const modalRef = useRef<HTMLElement>(null)
   const dragStartYRef = useRef(0)
+  const dragStartTimeRef = useRef(0)
   const dragPointerIdRef = useRef<number | null>(null)
   const closeTimerRef = useRef<number | null>(null)
   const isLoginMode = mode === 'login'
@@ -125,9 +126,10 @@ function AuthModal({
   }
 
   const handleDragStart = (event: ReactPointerEvent<HTMLDivElement>) => {
-    if (!window.matchMedia('(max-width: 639px)').matches) return
+    if (!window.matchMedia('(max-width: 820px)').matches) return
 
     dragStartYRef.current = event.clientY
+    dragStartTimeRef.current = performance.now()
     dragPointerIdRef.current = event.pointerId
     event.currentTarget.setPointerCapture(event.pointerId)
     if (modalRef.current) modalRef.current.style.transition = 'none'
@@ -144,15 +146,23 @@ function AuthModal({
     if (dragPointerIdRef.current !== event.pointerId) return
 
     const distance = Math.max(0, event.clientY - dragStartYRef.current)
+    const elapsed = Math.max(1, performance.now() - dragStartTimeRef.current)
+    const velocity = distance / elapsed
     dragPointerIdRef.current = null
 
-    if (distance >= 90 && modalRef.current) {
+    if ((distance >= 65 || (distance >= 20 && velocity >= 0.55)) && modalRef.current) {
       modalRef.current.style.transition = 'transform 180ms ease-in'
       modalRef.current.style.transform = 'translateY(100%)'
       closeTimerRef.current = window.setTimeout(onClose, 180)
       return
     }
 
+    resetModalPosition()
+  }
+
+  const handleDragCancel = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (dragPointerIdRef.current !== event.pointerId) return
+    dragPointerIdRef.current = null
     resetModalPosition()
   }
 
@@ -418,7 +428,7 @@ function AuthModal({
           onPointerDown={handleDragStart}
           onPointerMove={handleDragMove}
           onPointerUp={handleDragEnd}
-          onPointerCancel={handleDragEnd}
+          onPointerCancel={handleDragCancel}
         />
         <button
           type="button"
