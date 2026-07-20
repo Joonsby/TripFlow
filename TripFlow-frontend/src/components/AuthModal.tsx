@@ -1,4 +1,10 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react'
+import {
+  useEffect,
+  useRef,
+  useState,
+  type FormEvent,
+  type PointerEvent as ReactPointerEvent,
+} from 'react'
 import {
   AuthApiError,
   checkEmailAvailability,
@@ -77,6 +83,10 @@ function AuthModal({
   const emailAvailabilityRequestId = useRef(0)
   const signupRequestInFlight = useRef(false)
   const loginRequestInFlight = useRef(false)
+  const modalRef = useRef<HTMLElement>(null)
+  const dragStartYRef = useRef(0)
+  const dragPointerIdRef = useRef<number | null>(null)
+  const closeTimerRef = useRef<number | null>(null)
   const isLoginMode = mode === 'login'
   const isSignupComplete = mode === 'complete'
   const isLoginComplete = mode === 'loginComplete'
@@ -97,8 +107,54 @@ function AuthModal({
     return () => {
       document.body.style.overflow = previousOverflow
       window.removeEventListener('keydown', handleEscape)
+      if (closeTimerRef.current !== null) {
+        window.clearTimeout(closeTimerRef.current)
+      }
     }
   }, [onClose])
+
+  const resetModalPosition = () => {
+    const modal = modalRef.current
+    if (!modal) return
+
+    modal.style.transition = 'transform 180ms ease-out'
+    modal.style.transform = 'translateY(0)'
+    window.setTimeout(() => {
+      if (modalRef.current) modalRef.current.style.transition = ''
+    }, 180)
+  }
+
+  const handleDragStart = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (!window.matchMedia('(max-width: 639px)').matches) return
+
+    dragStartYRef.current = event.clientY
+    dragPointerIdRef.current = event.pointerId
+    event.currentTarget.setPointerCapture(event.pointerId)
+    if (modalRef.current) modalRef.current.style.transition = 'none'
+  }
+
+  const handleDragMove = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (dragPointerIdRef.current !== event.pointerId || !modalRef.current) return
+
+    const distance = Math.max(0, event.clientY - dragStartYRef.current)
+    modalRef.current.style.transform = `translateY(${distance}px)`
+  }
+
+  const handleDragEnd = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (dragPointerIdRef.current !== event.pointerId) return
+
+    const distance = Math.max(0, event.clientY - dragStartYRef.current)
+    dragPointerIdRef.current = null
+
+    if (distance >= 90 && modalRef.current) {
+      modalRef.current.style.transition = 'transform 180ms ease-in'
+      modalRef.current.style.transform = 'translateY(100%)'
+      closeTimerRef.current = window.setTimeout(onClose, 180)
+      return
+    }
+
+    resetModalPosition()
+  }
 
   const handleLoginSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -350,12 +406,20 @@ function AuthModal({
       />
 
       <section
+        ref={modalRef}
         className="login-modal"
         role="dialog"
         aria-modal="true"
         aria-labelledby="auth-modal-title"
       >
-        <div className="login-modal-handle" aria-hidden="true" />
+        <div
+          className="login-modal-handle"
+          aria-hidden="true"
+          onPointerDown={handleDragStart}
+          onPointerMove={handleDragMove}
+          onPointerUp={handleDragEnd}
+          onPointerCancel={handleDragEnd}
+        />
         <button
           type="button"
           className="login-modal-close"

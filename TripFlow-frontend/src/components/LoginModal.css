@@ -44,11 +44,27 @@
 }
 
 .login-modal-handle {
+  position: relative;
+  width: 72px;
+  height: 20px;
+  margin: -6px auto -6px;
+  cursor: grab;
+  touch-action: none;
+}
+
+.login-modal-handle::after {
+  position: absolute;
+  top: 8px;
+  left: 15px;
   width: 42px;
   height: 4px;
-  margin: 0 auto 4px;
   background: #cbd5e1;
   border-radius: 999px;
+  content: '';
+}
+
+.login-modal-handle:active {
+  cursor: grabbing;
 }
 
 .login-modal-close {

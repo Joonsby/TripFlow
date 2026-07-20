@@ -240,10 +240,7 @@ function Header({ authenticatedUser, onAuthClick, onLogout, onNavigate }: Header
             <button
               type="button"
               className="auth-link auth-link-primary"
-              onClick={() => {
-                setIsMobileMenuOpen(false)
-                onAuthClick?.()
-              }}
+              onClick={onAuthClick}
             >
               {t.auth}
             </button>
