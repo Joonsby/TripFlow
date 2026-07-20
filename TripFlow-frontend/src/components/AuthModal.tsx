@@ -163,7 +163,6 @@ function AuthModal({
     if ((distance >= 65 || (distance >= 20 && velocity >= 0.55)) && modalRef.current) {
       if (isClosingRef.current) return
       isClosingRef.current = true
-      setIsClosing(true)
       modalRef.current.style.transition = 'transform 220ms ease-in'
       modalRef.current.style.transform = 'translateY(100%)'
       closeTimerRef.current = window.setTimeout(onClose, 220)
