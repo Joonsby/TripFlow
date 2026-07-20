@@ -4,6 +4,7 @@ import DateRangePicker from './DateRangePicker'
 import GuestPicker from './GuestPicker'
 import { headerMessages, type Locale } from '../i18n'
 import { useLocaleStore } from '../stores/localeStore'
+import { lockBodyScroll } from '../utils/bodyScrollLock'
 import logo from '../assets/logo.png'
 import './Header.css'
 
@@ -60,6 +61,12 @@ function Header({ authenticatedUser, onAuthClick, onLogout, onNavigate }: Header
     const handlePointerDown = (event: PointerEvent) => {
       if (!(event.target instanceof Node)) return
 
+      const targetElement =
+        event.target instanceof Element
+          ? event.target
+          : event.target.parentElement
+      if (targetElement?.closest('.login-modal-layer')) return
+
       const isInsidePanel = mobileMenuPanelRef.current?.contains(event.target)
       const isMenuButton = mobileMenuButtonRef.current?.contains(event.target)
 
@@ -68,13 +75,12 @@ function Header({ authenticatedUser, onAuthClick, onLogout, onNavigate }: Header
       }
     }
 
-    const previousOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
+    const unlockBodyScroll = lockBodyScroll()
     window.addEventListener('keydown', handleEscape)
     document.addEventListener('pointerdown', handlePointerDown)
 
     return () => {
-      document.body.style.overflow = previousOverflow
+      unlockBodyScroll()
       window.removeEventListener('keydown', handleEscape)
       document.removeEventListener('pointerdown', handlePointerDown)
     }

@@ -1,4 +1,5 @@
 import {
+  useCallback,
   useEffect,
   useRef,
   useState,
@@ -13,6 +14,7 @@ import {
   type SignupRequest,
 } from '../api/auth'
 import { useAuthStore } from '../stores/authStore'
+import { lockBodyScroll } from '../utils/bodyScrollLock'
 import googleLogo from '../assets/google.png'
 import kakaoLogo from '../assets/kakao.png'
 import logo from '../assets/logo.png'
@@ -58,6 +60,7 @@ function AuthModal({
 }: AuthModalProps) {
   const setAuth = useAuthStore((state) => state.setAuth)
   const [mode, setMode] = useState<AuthMode>(initialMode)
+  const [isClosing, setIsClosing] = useState(false)
   const [notice, setNotice] = useState('')
   const [loginEmail, setLoginEmail] = useState('')
   const [loginPassword, setLoginPassword] = useState('')
@@ -88,31 +91,38 @@ function AuthModal({
   const dragStartTimeRef = useRef(0)
   const dragPointerIdRef = useRef<number | null>(null)
   const closeTimerRef = useRef<number | null>(null)
+  const isClosingRef = useRef(false)
   const isLoginMode = mode === 'login'
   const isSignupComplete = mode === 'complete'
   const isLoginComplete = mode === 'loginComplete'
   const isComplete = isSignupComplete || isLoginComplete
 
+  const closeModal = useCallback(() => {
+    if (isClosingRef.current) return
+    isClosingRef.current = true
+    setIsClosing(true)
+    closeTimerRef.current = window.setTimeout(onClose, 220)
+  }, [onClose])
+
   useEffect(() => {
-    const previousOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
+    const unlockBodyScroll = lockBodyScroll()
     if (window.matchMedia('(min-width: 640px)').matches) {
       emailRef.current?.focus()
     }
 
     const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose()
+      if (event.key === 'Escape') closeModal()
     }
 
     window.addEventListener('keydown', handleEscape)
     return () => {
-      document.body.style.overflow = previousOverflow
+      unlockBodyScroll()
       window.removeEventListener('keydown', handleEscape)
       if (closeTimerRef.current !== null) {
         window.clearTimeout(closeTimerRef.current)
       }
     }
-  }, [onClose])
+  }, [closeModal])
 
   const resetModalPosition = () => {
     const modal = modalRef.current
@@ -151,9 +161,12 @@ function AuthModal({
     dragPointerIdRef.current = null
 
     if ((distance >= 65 || (distance >= 20 && velocity >= 0.55)) && modalRef.current) {
-      modalRef.current.style.transition = 'transform 180ms ease-in'
+      if (isClosingRef.current) return
+      isClosingRef.current = true
+      setIsClosing(true)
+      modalRef.current.style.transition = 'transform 220ms ease-in'
       modalRef.current.style.transform = 'translateY(100%)'
-      closeTimerRef.current = window.setTimeout(onClose, 180)
+      closeTimerRef.current = window.setTimeout(onClose, 220)
       return
     }
 
@@ -407,12 +420,15 @@ function AuthModal({
   }
 
   return (
-    <div className="login-modal-layer" role="presentation">
+    <div
+      className={`login-modal-layer${isClosing ? ' is-closing' : ''}`}
+      role="presentation"
+    >
       <button
         type="button"
         className="login-modal-backdrop"
         aria-label="인증 창 닫기"
-        onClick={onClose}
+        onClick={closeModal}
       />
 
       <section
@@ -434,7 +450,7 @@ function AuthModal({
           type="button"
           className="login-modal-close"
           aria-label="인증 창 닫기"
-          onClick={onClose}
+          onClick={closeModal}
         >
           <span aria-hidden="true">×</span>
         </button>
@@ -504,7 +520,7 @@ function AuthModal({
               <button
                 type="button"
                 className="login-modal-submit"
-                onClick={onClose}
+                onClick={closeModal}
               >
                 확인
               </button>
@@ -523,7 +539,7 @@ function AuthModal({
                 <button
                   type="button"
                   className="auth-modal-complete-home"
-                  onClick={onClose}
+                  onClick={closeModal}
                 >
                   홈으로 이동
                 </button>
