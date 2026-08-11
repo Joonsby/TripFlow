@@ -284,6 +284,7 @@
 
 .host-form-field {
   display: grid;
+  align-content: start;
   gap: 9px;
   min-width: 0;
 }
@@ -358,6 +359,29 @@
 
 .host-character-count {
   justify-self: end;
+}
+
+.host-business-verification-area {
+  display: grid;
+  grid-column: 1 / -1;
+  justify-items: end;
+  gap: 9px;
+}
+
+.host-business-verification-button {
+  white-space: nowrap;
+}
+
+.host-business-verification-area .host-business-verification-message {
+  font-weight: 750;
+}
+
+.host-business-verification-message.is-success {
+  color: #16a34a;
+}
+
+.host-business-verification-message.is-error {
+  color: #dc2626;
 }
 
 .host-address-row {
@@ -550,6 +574,7 @@
   .host-cta-card, .host-register-placeholder { grid-template-columns: 1fr; }
   .host-form-section, .host-agreement-section, .host-submit-result { padding: 24px 20px; border-radius: 20px; }
   .host-address-row { grid-template-columns: 1fr; }
+  .host-business-verification-area { grid-column: auto; justify-items: stretch; }
   .host-address-button { width: 100%; }
   .host-address-map { height: 230px; }
   .host-business-map { width: calc(100vw - 70px); height: 260px; }

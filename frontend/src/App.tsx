@@ -158,7 +158,7 @@ function App() {
         <MyPage user={authenticatedUser} onNavigate={navigate} />
       )}
       {pathname === '/host/register' && authenticatedUser && (
-        <HostRegisterPage onNavigate={navigate} />
+        <HostRegisterPage user={authenticatedUser} onNavigate={navigate} />
       )}
       {isAuthOpen && <AuthModal onClose={closeAuth} />}
       {isLogoutConfirmOpen && (

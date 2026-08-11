@@ -1,7 +1,11 @@
-import { useRef, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
+import axios from 'axios'
+import { verifyBusiness } from '../api/businessVerification'
+import type { AuthUser } from '../stores/authStore'
 import './AccountPages.css'
 
 type HostRegisterPageProps = {
+  user: AuthUser
   onNavigate: (path: string) => void
 }
 
@@ -9,6 +13,7 @@ type HostRegistrationForm = {
   businessName: string
   representativeName: string
   businessNumber: string
+  openingDate: string
   businessPostCode: string
   businessRoadAddress: string
   businessDetailAddress: string
@@ -16,6 +21,7 @@ type HostRegistrationForm = {
 }
 
 type AgreementKey = 'hostPolicy' | 'privacy' | 'informationAccuracy'
+type BusinessVerificationStatus = 'idle' | 'loading' | 'success' | 'error'
 
 type KakaoMapInstance = {
   addControl: (control: unknown, position: unknown) => void
@@ -67,15 +73,16 @@ type KakaoBrowserWindow = typeof window & {
   }
 }
 
-const INITIAL_FORM: HostRegistrationForm = {
+const createInitialForm = (representativeName: string): HostRegistrationForm => ({
   businessName: '',
-  representativeName: '',
+  representativeName,
   businessNumber: '',
+  openingDate: '',
   businessPostCode: '',
   businessRoadAddress: '',
   businessDetailAddress: '',
   introduction: '',
-}
+})
 
 const formatBusinessNumber = (value: string) => {
   const digits = value.replace(/\D/g, '').slice(0, 10)
@@ -113,12 +120,12 @@ const loadScript = (id: string, source: string) =>
     }
   })
 
-function HostRegisterPage({ onNavigate }: HostRegisterPageProps) {
+function HostRegisterPage({ user, onNavigate }: HostRegisterPageProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null)
   const kakaoMapRef = useRef<KakaoMapInstance | null>(null)
   const kakaoMarkerRef = useRef<KakaoMarkerInstance | null>(null)
 
-  const [form, setForm] = useState(INITIAL_FORM)
+  const [form, setForm] = useState(() => createInitialForm(user.name))
   const [agreements, setAgreements] = useState<Record<AgreementKey, boolean>>({
     hostPolicy: false,
     privacy: false,
@@ -126,23 +133,108 @@ function HostRegisterPage({ onNavigate }: HostRegisterPageProps) {
   })
   const [addressNotice, setAddressNotice] = useState('')
   const [isAddressSearchLoading, setIsAddressSearchLoading] = useState(false)
-  const [isMapVisible, setIsMapVisible] = useState(false)
+  const [businessVerificationStatus, setBusinessVerificationStatus] =
+    useState<BusinessVerificationStatus>('idle')
+  const [businessVerificationMessage, setBusinessVerificationMessage] = useState('')
+  const [isMapVisible, setIsMapVisible] = useState(true)
   const [submittedValues, setSubmittedValues] = useState<HostRegistrationForm | null>(null)
   const detailAddressRef = useRef<HTMLInputElement>(null)
+  const verificationAttemptRef = useRef(0)
 
   const businessNumberDigits = form.businessNumber.replace(/\D/g, '')
   const hasRequiredValues =
     form.businessName.trim().length > 0 &&
     form.representativeName.trim().length > 0 &&
     businessNumberDigits.length === 10 &&
+    form.openingDate.length > 0 &&
     form.businessPostCode.trim().length > 0 &&
     form.businessRoadAddress.trim().length > 0
   const hasRequiredAgreements = Object.values(agreements).every(Boolean)
   const canSubmit = hasRequiredValues && hasRequiredAgreements
+  const canVerifyBusiness =
+    form.businessName.trim().length > 0 &&
+    form.representativeName.trim().length > 0 &&
+    businessNumberDigits.length === 10 &&
+    form.openingDate.length > 0 &&
+    businessVerificationStatus !== 'loading'
+
+  useEffect(() => {
+    const maps = (window as KakaoBrowserWindow).kakao?.maps
+    const container = mapContainerRef.current
+
+    if (!maps || !container || kakaoMapRef.current) return
+
+    const initialPosition = new maps.LatLng(37.5665, 126.978)
+    const map = new maps.Map(container, {
+      center: initialPosition,
+      level: 5,
+      draggable: false,
+    })
+
+    map.addControl(
+      new maps.MapTypeControl(),
+      maps.ControlPosition.TOPRIGHT,
+    )
+    map.addControl(
+      new maps.ZoomControl(),
+      maps.ControlPosition.RIGHT,
+    )
+
+    kakaoMapRef.current = map
+  }, [])
 
   const updateField = (field: keyof HostRegistrationForm, value: string) => {
+    if (
+      field === 'businessName' ||
+      field === 'representativeName' ||
+      field === 'businessNumber' ||
+      field === 'openingDate'
+    ) {
+      verificationAttemptRef.current += 1
+      setBusinessVerificationStatus('idle')
+      setBusinessVerificationMessage('')
+    }
+
     setForm((current) => ({ ...current, [field]: value }))
     setSubmittedValues(null)
+  }
+
+  const handleBusinessVerification = async () => {
+    if (!canVerifyBusiness) return
+
+    const attempt = verificationAttemptRef.current + 1
+    verificationAttemptRef.current = attempt
+    const verificationValues = {
+      businessName: form.businessName.trim(),
+      representativeName: form.representativeName.trim(),
+      businessNumber: businessNumberDigits,
+      openingDate: form.openingDate,
+    }
+
+    setBusinessVerificationStatus('loading')
+    setBusinessVerificationMessage('')
+
+    try {
+      const response = await verifyBusiness(verificationValues)
+      if (verificationAttemptRef.current !== attempt) return
+
+      setBusinessVerificationStatus(response.verified ? 'success' : 'error')
+      setBusinessVerificationMessage(
+        response.message || (response.verified
+          ? '사업자 정보가 확인되었습니다.'
+          : '사업자 정보를 확인하지 못했습니다.'),
+      )
+    } catch (error) {
+      if (verificationAttemptRef.current !== attempt) return
+
+      setBusinessVerificationStatus('error')
+      const responseMessage = axios.isAxiosError(error)
+        && typeof error.response?.data?.message === 'string'
+        ? error.response.data.message
+        : null
+
+      setBusinessVerificationMessage(responseMessage ?? '사업자 정보를 확인하지 못했습니다.')
+    }
   }
   const handleAddressSearch = async () => {
     setAddressNotice('')
@@ -182,13 +274,12 @@ function HostRegisterPage({ onNavigate }: HostRegisterPageProps) {
                   let map = kakaoMapRef.current
                   let marker = kakaoMarkerRef.current
 
-                  if (!map || !marker) {
+                  if (!map) {
                     map = new maps.Map(container, {
                       center: position,
                       level: 3,
                       draggable: false,
                     })
-                    marker = new maps.Marker({ map, position })
                     map.addControl(
                       new maps.MapTypeControl(),
                       maps.ControlPosition.TOPRIGHT,
@@ -198,12 +289,17 @@ function HostRegisterPage({ onNavigate }: HostRegisterPageProps) {
                       maps.ControlPosition.RIGHT,
                     )
                     kakaoMapRef.current = map
+                  }
+
+                  if (!marker) {
+                    marker = new maps.Marker({ map, position })
                     kakaoMarkerRef.current = marker
+                  } else {
+                    marker.setPosition(position)
                   }
 
                   map.relayout()
                   map.setCenter(position)
-                  marker.setPosition(position)
                 })
               } else {
                 console.error('주소 좌표 변환에 실패했습니다:', status)
@@ -296,7 +392,7 @@ function HostRegisterPage({ onNavigate }: HostRegisterPageProps) {
                   required
                 />
               </label>
-              <label className="host-form-field host-form-field-wide">
+              <div className="host-form-field">
                 <span>사업자등록번호 <em>필수</em></span>
                 <input
                   type="text"
@@ -307,7 +403,7 @@ function HostRegisterPage({ onNavigate }: HostRegisterPageProps) {
                   inputMode="numeric"
                   autoComplete="off"
                   maxLength={12}
-                  aria-describedby="business-number-help"
+                  aria-describedby="business-number-help business-verification-message"
                   required
                 />
                 <small id="business-number-help">
@@ -315,7 +411,36 @@ function HostRegisterPage({ onNavigate }: HostRegisterPageProps) {
                     ? '숫자 10자리를 입력해 주세요.'
                     : '하이픈은 자동으로 입력됩니다.'}
                 </small>
+              </div>
+              <label className="host-form-field">
+                <span>개업일자 <em>필수</em></span>
+                <input
+                  type="date"
+                  name="openingDate"
+                  value={form.openingDate}
+                  onChange={(event) => updateField('openingDate', event.target.value)}
+                  required
+                />
               </label>
+              <div className="host-business-verification-area">
+                <button
+                  type="button"
+                  className="host-address-button host-business-verification-button"
+                  onClick={handleBusinessVerification}
+                  disabled={!canVerifyBusiness}
+                >
+                  {businessVerificationStatus === 'loading' ? '인증 중...' : '사업자 정보 인증'}
+                </button>
+                {businessVerificationMessage && (
+                  <small
+                    id="business-verification-message"
+                    className={`host-business-verification-message is-${businessVerificationStatus}`}
+                    role={businessVerificationStatus === 'error' ? 'alert' : 'status'}
+                  >
+                    {businessVerificationMessage}
+                  </small>
+                )}
+              </div>
             </div>
           </section>
 
@@ -435,6 +560,7 @@ function HostRegisterPage({ onNavigate }: HostRegisterPageProps) {
                 <div><dt>상호명</dt><dd>{submittedValues.businessName}</dd></div>
                 <div><dt>대표자명</dt><dd>{submittedValues.representativeName}</dd></div>
                 <div><dt>사업자등록번호</dt><dd>{submittedValues.businessNumber}</dd></div>
+                <div><dt>개업일자</dt><dd>{submittedValues.openingDate}</dd></div>
                 <div><dt>주소</dt><dd>{`${submittedValues.businessPostCode} ${submittedValues.businessRoadAddress} ${submittedValues.businessDetailAddress}`.trim()}</dd></div>
                 <div><dt>호스트 소개</dt><dd>{submittedValues.introduction || '입력하지 않음'}</dd></div>
               </dl>
