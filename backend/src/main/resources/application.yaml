@@ -31,6 +31,11 @@ mybatis:
 server:
   port: ${SERVER_PORT:8080}
 
+external:
+  nts:
+    service-key: ${NTS_BUSINESS_API_KEY:}
+    base-url: https://api.odcloud.kr/api/nts-businessman/v1
+
 ---
 # local 프로필에서만 .env 파일 읽기
 spring:
