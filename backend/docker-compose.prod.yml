@@ -1,19 +1,21 @@
 services:
   mysql:
     image: mysql:8.0
-    container_name: tripflow-mysql
-    ports:
-      - "127.0.0.1:3307:3306"
+    container_name: tripflow-mysql-prod
     restart: unless-stopped
-    env_file:
-      - /home/ubuntu/apps/TripFlow/shared/env/backend.env
+
+    ports:
+      - "127.0.0.1:3308:3306"
+
     environment:
       MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
       MYSQL_DATABASE: ${DB_NAME}
       MYSQL_USER: ${DB_USER}
       MYSQL_PASSWORD: ${DB_PASSWORD}
+
     volumes:
-      - mysql_data:/var/lib/mysql
+      - tripflow_mysql_data:/var/lib/mysql
+
     healthcheck:
       test:
         - CMD-SHELL
@@ -21,45 +23,37 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
+      start_period: 30s
+
 
   backend:
     build: .
-    container_name: tripflow-backend
+    container_name: tripflow-backend-prod
     restart: unless-stopped
-    env_file:
-      - /home/ubuntu/apps/TripFlow/shared/env/backend.env
+
+    ports:
+      - "127.0.0.1:8081:8080"
+
     environment:
       SPRING_PROFILES_ACTIVE: prod
+
       DB_HOST: mysql
       DB_PORT: 3306
       DB_NAME: ${DB_NAME}
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
-    expose:
-      - "8080"
+
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_ACCESS_TOKEN_MINUTES: ${JWT_ACCESS_TOKEN_MINUTES:-30}
+      JWT_REFRESH_TOKEN_DAYS: ${JWT_REFRESH_TOKEN_DAYS:-14}
+      COOKIE_SECURE: ${COOKIE_SECURE:-true}
+
+      NTS_BUSINESS_API_KEY: ${NTS_BUSINESS_API_KEY}
+
     depends_on:
       mysql:
         condition: service_healthy
 
-  nginx:
-    image: nginx:alpine
-    container_name: tripflow-nginx
-    restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
-      - /home/ubuntu/apps/TripFlow/shared/certbot/conf:/etc/letsencrypt:ro
-      - /home/ubuntu/apps/TripFlow/shared/certbot/www:/var/www/certbot:ro
-    depends_on:
-      - backend
-
-  certbot:
-    image: certbot/certbot
-    volumes:
-      - /home/ubuntu/apps/TripFlow/shared/certbot/conf:/etc/letsencrypt
-      - /home/ubuntu/apps/TripFlow/shared/certbot/www:/var/www/certbot
 
 volumes:
-  mysql_data:
+  tripflow_mysql_data:
