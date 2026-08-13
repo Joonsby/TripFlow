@@ -1,8 +1,5 @@
 DROP TABLE host_info;
 
-Alter TABLE favorite_plan
-    DROP COLUMN new_user_id;
-
 CREATE TABLE host_info (
     host_id INT NOT NULL AUTO_INCREMENT,
     user_id INT NOT NULL,
