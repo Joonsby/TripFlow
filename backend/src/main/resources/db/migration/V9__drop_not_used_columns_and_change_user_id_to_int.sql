@@ -1,5 +1,0 @@
-ALTER TABLE reservation
-    MODIFY COLUMN user_id INT NOT NULL;
-
-ALTER TABLE stay_info
-    MODIFY COLUMN host_id INT NOT NULL;
