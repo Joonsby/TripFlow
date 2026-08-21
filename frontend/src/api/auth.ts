@@ -62,6 +62,32 @@ export class AuthApiError extends Error {
   }
 }
 
+const SESSION_MARKER_KEY = 'tripflow.hasSession'
+
+export const hasStoredSession = (): boolean => {
+  try {
+    return window.localStorage.getItem(SESSION_MARKER_KEY) === 'true'
+  } catch {
+    return false
+  }
+}
+
+const storeSessionMarker = (): void => {
+  try {
+    window.localStorage.setItem(SESSION_MARKER_KEY, 'true')
+  } catch {
+    // Storage can be unavailable in restricted browser contexts.
+  }
+}
+
+export const clearSessionMarker = (): void => {
+  try {
+    window.localStorage.removeItem(SESSION_MARKER_KEY)
+  } catch {
+    // The in-memory auth state is still cleared by the caller.
+  }
+}
+
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null
 
@@ -135,6 +161,7 @@ export async function login(request: LoginRequest): Promise<LoginResponse> {
       request,
       { withCredentials: true },
     )
+    storeSessionMarker()
     return response.data
   } catch (error) {
     return toAuthApiError(error)
@@ -156,7 +183,11 @@ export function refreshInitialSession(): Promise<RefreshResponse> {
 }
 
 export async function logout(): Promise<void> {
-  await apiClient.post<void>('/api/auth/logout', undefined, {
-    withCredentials: true,
-  })
+  try {
+    await apiClient.post<void>('/api/auth/logout', undefined, {
+      withCredentials: true,
+    })
+  } finally {
+    clearSessionMarker()
+  }
 }

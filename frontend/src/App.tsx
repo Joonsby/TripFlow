@@ -7,7 +7,12 @@ import MyPage from './components/MyPage'
 import { useAuthStore } from './stores/authStore'
 import { useLocaleStore } from './stores/localeStore'
 import { useDocumentTranslation } from './hooks/useDocumentTranslation'
-import { logout, refreshInitialSession } from './api/auth'
+import {
+  clearSessionMarker,
+  hasStoredSession,
+  logout,
+  refreshInitialSession,
+} from './api/auth'
 import './App.css'
 
 function App() {  
@@ -36,11 +41,19 @@ function App() {
   useEffect(() => {
     let isActive = true
 
+    if (!hasStoredSession()) {
+      clearAuth()
+      return () => {
+        isActive = false
+      }
+    }
+
     refreshInitialSession()
       .then((response) => {
         if (isActive) setAuth(response.accessToken, response.user)
       })
       .catch(() => {
+        clearSessionMarker()
         if (isActive) clearAuth()
       })
 
