@@ -41,8 +41,11 @@ public class SecurityConfig {
                                 "/api/auth/login",
                                 "/api/auth/signup",
                                 "/api/auth/refresh",
-                                "/api/auth/email-availabiliy",
                                 "/api/auth/logout"
+                        ).permitAll()
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/auth/email-availability"
                         ).permitAll()
                         .requestMatchers(
                                 HttpMethod.POST,
