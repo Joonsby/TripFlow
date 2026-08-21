@@ -23,7 +23,6 @@ public class BusinessVerificationController {
             @Valid @RequestBody BusinessVerificationRequest request
             ){
                 BusinessVerificationResponse response = businessVerificationService.verify(request);
-
                 return ResponseEntity.ok(response);
     }
 }
