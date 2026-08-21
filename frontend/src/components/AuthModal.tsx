@@ -547,7 +547,11 @@ function AuthModal({
           </div>
         ) : isLoginMode ? (
           <>
-            <form className="login-modal-form" onSubmit={handleLoginSubmit}>
+            <form
+              key="login"
+              className="login-modal-form"
+              onSubmit={handleLoginSubmit}
+            >
               <label className="login-modal-field">
                 <span>이메일</span>
                 <input
@@ -634,6 +638,7 @@ function AuthModal({
         ) : (
           <>
             <form
+              key="signup"
               className="login-modal-form"
               onSubmit={handleSignupSubmit}
               noValidate
