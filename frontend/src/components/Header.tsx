@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { AuthUser } from '../stores/authStore'
 import DateRangePicker from './DateRangePicker'
 import GuestPicker from './GuestPicker'
+import UserProfileMenu from './UserProfileMenu'
 import { headerMessages, type Locale } from '../i18n'
 import { useLocaleStore } from '../stores/localeStore'
 import { lockBodyScroll } from '../utils/bodyScrollLock'
@@ -36,12 +37,9 @@ function Header({ authenticatedUser, onAuthClick, onLogout, onNavigate }: Header
   const selectedLanguage = languages.find(({ code }) => code === locale) ?? languages[0]
   const [isLanguageOpen, setIsLanguageOpen] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-  const [isProfileOpen, setIsProfileOpen] = useState(false)
-  const [isLoggingOut, setIsLoggingOut] = useState(false)
   const languageMenuRef = useRef<HTMLDivElement>(null)
   const mobileMenuButtonRef = useRef<HTMLButtonElement>(null)
   const mobileMenuPanelRef = useRef<HTMLDivElement>(null)
-  const profileMenuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme
@@ -105,39 +103,9 @@ function Header({ authenticatedUser, onAuthClick, onLogout, onNavigate }: Header
     }
   }, [isLanguageOpen])
 
-  useEffect(() => {
-    if (!isProfileOpen) return
-
-    const handlePointerDown = (event: PointerEvent) => {
-      if (
-        event.target instanceof Node &&
-        !profileMenuRef.current?.contains(event.target)
-      ) {
-        setIsProfileOpen(false)
-      }
-    }
-
-    document.addEventListener('pointerdown', handlePointerDown)
-    return () => document.removeEventListener('pointerdown', handlePointerDown)
-  }, [isProfileOpen])
-
   const navigate = (path: string) => {
     onNavigate(path)
-    setIsProfileOpen(false)
     setIsMobileMenuOpen(false)
-  }
-
-  const handleLogout = async () => {
-    if (isLoggingOut) return
-
-    setIsLoggingOut(true)
-    setIsProfileOpen(false)
-    setIsMobileMenuOpen(false)
-    try {
-      await onLogout()
-    } finally {
-      setIsLoggingOut(false)
-    }
   }
 
   const isDarkMode = theme === 'dark'
@@ -211,46 +179,18 @@ function Header({ authenticatedUser, onAuthClick, onLogout, onNavigate }: Header
         <div className="header-actions" aria-label={t.userMenu}>
           {authenticatedUser ? (
             <div className="authenticated-actions">
-              <div className="profile-menu" ref={profileMenuRef}>
-                <button
-                  type="button"
-                  className="profile-button"
-                  aria-haspopup="menu"
-                  aria-expanded={isProfileOpen}
-                  onClick={() => setIsProfileOpen((open) => !open)}
-                >
-                  <span className="profile-avatar" aria-hidden="true">
-                    {authenticatedUser.name.trim().charAt(0) || '?'}
-                  </span>
-                  <span className="profile-name">{authenticatedUser.name}</span>
-                  <svg
-                    className="profile-chevron"
-                    viewBox="0 0 20 20"
-                    aria-hidden="true"
-                  >
-                    <path d="m6 8 4 4 4-4" />
-                  </svg>
-                </button>
-
-                {isProfileOpen && (
-                  <div className="profile-dropdown" role="menu">
-                    <button type="button" role="menuitem" onClick={() => navigate('/mypage')}>{t.myPage}</button>
-                    <button type="button" role="menuitem" onClick={() => navigate('/reservations')}>{t.reservations}</button>
-                    <button type="button" role="menuitem" onClick={() => navigate('/wishlist')}>{t.wishlist}</button>
-                    <button type="button" role="menuitem" onClick={() => navigate('/trips')}>{t.trips}</button>
-                    <span className="profile-dropdown-divider" aria-hidden="true" />
-                    <button
-                      type="button"
-                      role="menuitem"
-                      className="profile-logout"
-                      disabled={isLoggingOut}
-                      onClick={() => void handleLogout()}
-                    >
-                      {isLoggingOut ? t.loggingOut : t.logout}
-                    </button>
-                  </div>
-                )}
-              </div>
+              <UserProfileMenu
+                user={authenticatedUser}
+                items={[
+                  { label: t.myPage, onSelect: () => navigate('/mypage') },
+                  { label: t.reservations, onSelect: () => navigate('/reservations') },
+                  { label: t.wishlist, onSelect: () => navigate('/wishlist') },
+                  { label: t.trips, onSelect: () => navigate('/trips') },
+                ]}
+                logoutLabel={t.logout}
+                loggingOutLabel={t.loggingOut}
+                onLogout={onLogout}
+              />
             </div>
           ) : (
             <button
