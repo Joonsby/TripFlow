@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.tripflow.host.mapper.HostMapper">
+    <select id="existsByUserId" resultType="boolean">
+        SELECT EXISTS (
+        SELECT 1
+        FROM host_info
+        WHERE user_id = #{userId}
+        )
+    </select>
+
+    <select id="existsByBusinessNumber" resultType="boolean">
+        SELECT EXISTS (
+        SELECT 1
+        FROM host_info
+        WHERE business_number = #{businessNumber}
+        )
+    </select>
+
+    <select id="existsApprovedByUserId" resultType="boolean">
+        SELECT EXISTS (
+        SELECT 1
+        FROM host_info
+        WHERE user_id = #{userId}
+          AND status = 'APPROVED'
+        )
+    </select>
+
+    <insert
+            id="insertHost"
+            parameterType="com.tripflow.host.domain.Host"
+            useGeneratedKeys="true"
+            keyProperty="hostId"
+            keyColumn="host_id"
+    >
+        INSERT INTO host_info (
+        user_id,
+        business_name,
+        representative_name,
+        business_number,
+        opening_date,
+        business_post_code,
+        business_road_address,
+        business_detail_address,
+        latitude,
+        longitude,
+        introduction,
+        status,
+        approved_at,
+        business_verified_at,
+        host_policy_agreed_at,
+        privacy_agreed_at,
+        information_accuracy_agreed_at
+        ) VALUES (
+        #{userId},
+        #{businessName},
+        #{representativeName},
+        #{businessNumber},
+        #{openingDate},
+        #{businessPostCode},
+        #{businessRoadAddress},
+        #{businessDetailAddress},
+        #{latitude},
+        #{longitude},
+        #{introduction},
+        #{status},
+        #{approvedAt},
+        #{businessVerifiedAt},
+        #{hostPolicyAgreedAt},
+        #{privacyAgreedAt},
+        #{informationAccuracyAgreedAt}
+        )
+    </insert>
+</mapper>

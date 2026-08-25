@@ -10,6 +10,7 @@ import com.tripflow.auth.refresh.RefreshToken;
 import com.tripflow.auth.refresh.RefreshTokenMapper;
 import com.tripflow.auth.token.AccessTokenProvider;
 import com.tripflow.auth.token.RefreshTokenProvider;
+import com.tripflow.host.mapper.HostMapper;
 import com.tripflow.user.domain.User;
 import com.tripflow.user.mapper.UserMapper;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +27,7 @@ import java.util.Locale;
 public class AuthService {
 
     private final UserMapper userMapper;
+    private final HostMapper hostMapper;
     private final RefreshTokenMapper refreshTokenMapper;
 
     private final PasswordEncoder passwordEncoder;
@@ -120,7 +122,8 @@ public class AuthService {
                 new LoginUserResponse(
                         user.getUserId(),
                         user.getEmail(),
-                        user.getName()
+                        user.getName(),
+                        hostMapper.existsApprovedByUserId(user.getUserId())
                 );
 
         LoginResponse response =
@@ -181,7 +184,8 @@ public class AuthService {
                 new LoginUserResponse(
                         user.getUserId(),
                         user.getEmail(),
-                        user.getName()
+                        user.getName(),
+                        hostMapper.existsApprovedByUserId(user.getUserId())
                 );
 
         return new RefreshResponse(

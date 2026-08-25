@@ -3,6 +3,9 @@ package com.tripflow.global.exception;
 import com.tripflow.auth.exception.DuplicateEmailException;
 import com.tripflow.auth.exception.DuplicatePhoneNumberException;
 import com.tripflow.auth.exception.InvalidLoginException;
+import com.tripflow.host.exception.BusinessVerificationFailedException;
+import com.tripflow.host.exception.DuplicateBusinessNumberException;
+import com.tripflow.host.exception.DuplicateHostApplicationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -14,6 +17,42 @@ import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(DuplicateHostApplicationException.class)
+    public ResponseEntity<Map<String, String>> handleDuplicateHostApplication(
+            DuplicateHostApplicationException exception
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(Map.of(
+                        "code", "HOST_APPLICATION_ALREADY_EXISTS",
+                        "message", exception.getMessage()
+                ));
+    }
+
+    @ExceptionHandler(DuplicateBusinessNumberException.class)
+    public ResponseEntity<Map<String, String>> handleDuplicateBusinessNumber(
+            DuplicateBusinessNumberException exception
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(Map.of(
+                        "code", "BUSINESS_NUMBER_ALREADY_EXISTS",
+                        "message", exception.getMessage()
+                ));
+    }
+
+    @ExceptionHandler(BusinessVerificationFailedException.class)
+    public ResponseEntity<Map<String, String>> handleBusinessVerificationFailed(
+            BusinessVerificationFailedException exception
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.UNPROCESSABLE_ENTITY)
+                .body(Map.of(
+                        "code", "BUSINESS_VERIFICATION_FAILED",
+                        "message", exception.getMessage()
+                ));
+    }
 
     @ExceptionHandler(DuplicateEmailException.class)
     public ResponseEntity<Map<String, String>> handleDuplicateEmail(
