@@ -8,8 +8,9 @@
 
 .account-page-inner { width: min(100%, 1040px); margin: 0 auto; }
 .account-page-inner-narrow { width: min(100%, 1120px); }
-.host-register-layout { width: min(1700px, calc(100vw - 56px)); }
-.mypage-layout { width: min(1700px, calc(100vw - 56px)); }
+.host-register-layout,
+.mypage-layout,
+.host-dashboard-layout { width: min(1700px, calc(100vw - 56px)); }
 .account-page-heading { margin-bottom: 32px; }
 
 .mypage-card-grid {
@@ -687,7 +688,8 @@
     grid-row: auto;
   }
   .host-register-layout,
-  .mypage-layout { width: 100%; }
+  .mypage-layout,
+  .host-dashboard-layout { width: 100%; }
   .host-business-map { width: 100%; height: 320px; }
 }
 
