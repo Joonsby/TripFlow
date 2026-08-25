@@ -43,11 +43,20 @@ function MyPage({ user, onNavigate }: MyPageProps) {
             <div className="host-cta-icon" aria-hidden="true">⌂</div>
             <div className="host-cta-copy">
               <span>HOST</span>
-              <h2 id="host-cta-title">호스트가 되어보세요</h2>
-              <p>나만의 공간을 여행자에게 소개할 준비를 시작해 보세요.</p>
+              <h2 id="host-cta-title">
+                {user.isHost ? '호스트 페이지로 이동' : '호스트가 되어보세요'}
+              </h2>
+              <p>
+                {user.isHost
+                  ? '숙소를 등록하고 호스트 활동을 관리해 보세요.'
+                  : '나만의 공간을 여행자에게 소개할 준비를 시작해 보세요.'}
+              </p>
             </div>
-            <button type="button" onClick={() => onNavigate('/host/register')}>
-              호스트 되기
+            <button
+              type="button"
+              onClick={() => onNavigate(user.isHost ? '/host/dashboard' : '/host/register')}
+            >
+              {user.isHost ? '호스트 화면으로 이동' : '호스트 되기'}
             </button>
           </section>
         </div>

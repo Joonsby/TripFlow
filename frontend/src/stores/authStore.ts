@@ -4,6 +4,7 @@ export type AuthUser = {
   userId: number
   email: string
   name: string
+  isHost: boolean
 }
 
 export type AuthStatus = 'checking' | 'authenticated' | 'anonymous'
@@ -13,6 +14,7 @@ type AuthState = {
   accessToken: string | null
   user: AuthUser | null
   setAuth: (accessToken: string, user: AuthUser) => void
+  markAsHost: () => void
   clearAuth: () => void
 }
 
@@ -22,6 +24,10 @@ export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   setAuth: (accessToken, user) =>
     set({ status: 'authenticated', accessToken, user }),
+  markAsHost: () =>
+    set((state) => ({
+      user: state.user ? { ...state.user, isHost: true } : null,
+    })),
   clearAuth: () =>
     set({ status: 'anonymous', accessToken: null, user: null }),
 }))

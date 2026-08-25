@@ -4,6 +4,7 @@ import './HomePage.css'
 
 type HomePageProps = {
   onNavigate: (path: string) => void
+  isHost: boolean
 }
 
 const destinations = [
@@ -58,7 +59,7 @@ const travelStyles = [
   { icon: '♨', title: '온전한 쉼', copy: '스파와 자쿠지가 있는 프라이빗 스테이' },
 ]
 
-function HomePage({ onNavigate }: HomePageProps) {
+function HomePage({ onNavigate, isHost }: HomePageProps) {
   return (
     <main className="home-page">
       <section className="home-hero" aria-labelledby="home-hero-title">
@@ -72,8 +73,11 @@ function HomePage({ onNavigate }: HomePageProps) {
           <p>도시의 설렘부터 자연 속 여유까지, 지금 나에게 맞는 공간을 발견하세요.</p>
           <div className="home-hero-actions">
             <a href="#featured-stays">추천 숙소 둘러보기</a>
-            <button type="button" onClick={() => onNavigate('/host/register')}>
-              내 공간 호스팅하기
+            <button
+              type="button"
+              onClick={() => onNavigate(isHost ? '/host/dashboard' : '/host/register')}
+            >
+              {isHost ? '호스트 화면으로 이동' : '내 공간 호스팅하기'}
             </button>
           </div>
         </div>
@@ -165,7 +169,12 @@ function HomePage({ onNavigate }: HomePageProps) {
             <h2 id="home-host-title">당신의 공간이 누군가의 여행이 됩니다</h2>
             <p>간단한 호스트 등록으로 공간의 새로운 가능성을 시작해 보세요.</p>
           </div>
-          <button type="button" onClick={() => onNavigate('/host/register')}>호스트 되기</button>
+          <button
+            type="button"
+            onClick={() => onNavigate(isHost ? '/host/dashboard' : '/host/register')}
+          >
+            {isHost ? '호스트 화면으로 이동' : '호스트 되기'}
+          </button>
         </section>
       </div>
     </main>

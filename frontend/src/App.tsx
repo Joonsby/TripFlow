@@ -3,6 +3,7 @@ import AuthModal from './components/AuthModal'
 import Header from './components/Header'
 import HomePage from './components/HomePage'
 import HostRegisterPage from './components/HostRegisterPage'
+import HostPage from './components/HostPage'
 import MyPage from './components/MyPage'
 import { useAuthStore } from './stores/authStore'
 import { useLocaleStore } from './stores/localeStore'
@@ -31,7 +32,10 @@ function App() {
   const authenticatedUser = useAuthStore((state) => state.user)
   const setAuth = useAuthStore((state) => state.setAuth)
   const clearAuth = useAuthStore((state) => state.clearAuth)
-  const isProtectedPath = pathname === '/mypage' || pathname === '/host/register'
+  const isProtectedPath =
+    pathname === '/mypage' ||
+    pathname === '/host/register' ||
+    pathname === '/host/dashboard'
 
   const navigate = useCallback((path: string, replace = false) => {
     window.history[replace ? 'replaceState' : 'pushState']({}, '', path)
@@ -108,7 +112,10 @@ function App() {
   }
 
   const navigateFromHome = (path: string) => {
-    const requiresAuth = path === '/mypage' || path === '/host/register'
+    const requiresAuth =
+      path === '/mypage' ||
+      path === '/host/register' ||
+      path === '/host/dashboard'
 
     if (requiresAuth && !authenticatedUser) {
       protectedDestinationRef.current = path
@@ -166,12 +173,22 @@ function App() {
         onLogout={requestLogoutConfirmation}
         onNavigate={navigate}
       />
-      {pathname === '/' && <HomePage onNavigate={navigateFromHome} />}
+      {pathname === '/' && (
+        <HomePage
+          onNavigate={navigateFromHome}
+          isHost={authenticatedUser?.isHost ?? false}
+        />
+      )}
       {pathname === '/mypage' && authenticatedUser && (
         <MyPage user={authenticatedUser} onNavigate={navigate} />
       )}
-      {pathname === '/host/register' && authenticatedUser && (
+      {(pathname === '/host/register' ||
+        (pathname === '/host/dashboard' && !authenticatedUser?.isHost)) &&
+        authenticatedUser && (
         <HostRegisterPage user={authenticatedUser} onNavigate={navigate} />
+      )}
+      {pathname === '/host/dashboard' && authenticatedUser?.isHost && (
+        <HostPage user={authenticatedUser} onNavigate={navigate} />
       )}
       {isAuthOpen && <AuthModal onClose={closeAuth} />}
       {isLogoutConfirmOpen && (

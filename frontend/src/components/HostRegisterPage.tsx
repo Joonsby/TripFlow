@@ -1,7 +1,12 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import axios from 'axios'
 import { verifyBusiness } from '../api/businessVerification'
-import type { AuthUser } from '../stores/authStore'
+import {
+  createHostApplication,
+  type HostApplicationResponse,
+} from '../api/hostApplications'
+import { useAuthStore, type AuthUser } from '../stores/authStore'
+import { lockBodyScroll } from '../utils/bodyScrollLock'
 import './AccountPages.css'
 
 type HostRegisterPageProps = {
@@ -22,9 +27,11 @@ type HostRegistrationForm = {
 
 type AgreementKey = 'hostPolicy' | 'privacy' | 'informationAccuracy'
 type BusinessVerificationStatus = 'idle' | 'loading' | 'success' | 'error'
+type MapCoordinates = { latitude: number; longitude: number }
 
 type KakaoMapInstance = {
   addControl: (control: unknown, position: unknown) => void
+  getCenter: () => unknown
   relayout: () => void
   setCenter: (position: unknown) => void
 }
@@ -121,6 +128,7 @@ const loadScript = (id: string, source: string) =>
   })
 
 function HostRegisterPage({ user, onNavigate }: HostRegisterPageProps) {
+  const markAsHost = useAuthStore((state) => state.markAsHost)
   const mapContainerRef = useRef<HTMLDivElement>(null)
   const kakaoMapRef = useRef<KakaoMapInstance | null>(null)
   const kakaoMarkerRef = useRef<KakaoMarkerInstance | null>(null)
@@ -137,7 +145,11 @@ function HostRegisterPage({ user, onNavigate }: HostRegisterPageProps) {
     useState<BusinessVerificationStatus>('idle')
   const [businessVerificationMessage, setBusinessVerificationMessage] = useState('')
   const [isMapVisible, setIsMapVisible] = useState(true)
-  const [submittedValues, setSubmittedValues] = useState<HostRegistrationForm | null>(null)
+  const [mapCoordinates, setMapCoordinates] = useState<MapCoordinates | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState('')
+  const [applicationResponse, setApplicationResponse] =
+    useState<HostApplicationResponse | null>(null)
   const detailAddressRef = useRef<HTMLInputElement>(null)
   const verificationAttemptRef = useRef(0)
 
@@ -150,13 +162,21 @@ function HostRegisterPage({ user, onNavigate }: HostRegisterPageProps) {
     form.businessPostCode.trim().length > 0 &&
     form.businessRoadAddress.trim().length > 0
   const hasRequiredAgreements = Object.values(agreements).every(Boolean)
-  const canSubmit = hasRequiredValues && hasRequiredAgreements
+  const canSubmit =
+    hasRequiredValues &&
+    hasRequiredAgreements &&
+    businessVerificationStatus === 'success'
   const canVerifyBusiness =
     form.businessName.trim().length > 0 &&
     form.representativeName.trim().length > 0 &&
     businessNumberDigits.length === 10 &&
     form.openingDate.length > 0 &&
     businessVerificationStatus !== 'loading'
+
+  useEffect(() => {
+    if (!applicationResponse) return
+    return lockBodyScroll()
+  }, [applicationResponse])
 
   useEffect(() => {
     const maps = (window as KakaoBrowserWindow).kakao?.maps
@@ -183,6 +203,31 @@ function HostRegisterPage({ user, onNavigate }: HostRegisterPageProps) {
     kakaoMapRef.current = map
   }, [])
 
+  useEffect(() => {
+    const container = mapContainerRef.current
+    if (!container) return
+
+    let resizeFrame = 0
+    const resizeObserver = new ResizeObserver(() => {
+      window.cancelAnimationFrame(resizeFrame)
+      resizeFrame = window.requestAnimationFrame(() => {
+        const map = kakaoMapRef.current
+        if (!map || container.clientWidth === 0 || container.clientHeight === 0) return
+
+        const center = map.getCenter()
+        map.relayout()
+        map.setCenter(center)
+      })
+    })
+
+    resizeObserver.observe(container)
+
+    return () => {
+      window.cancelAnimationFrame(resizeFrame)
+      resizeObserver.disconnect()
+    }
+  }, [])
+
   const updateField = (field: keyof HostRegistrationForm, value: string) => {
     if (
       field === 'businessName' ||
@@ -196,7 +241,8 @@ function HostRegisterPage({ user, onNavigate }: HostRegisterPageProps) {
     }
 
     setForm((current) => ({ ...current, [field]: value }))
-    setSubmittedValues(null)
+    setApplicationResponse(null)
+    setSubmitError('')
   }
 
   const handleBusinessVerification = async () => {
@@ -243,7 +289,7 @@ function HostRegisterPage({ user, onNavigate }: HostRegisterPageProps) {
     try {
       await loadScript(KAKAO_POSTCODE_SCRIPT_ID, KAKAO_POSTCODE_SCRIPT_URL)
 
-      const postcodeWindow = window as KakaoBrowserWindow
+          const postcodeWindow = window as KakaoBrowserWindow
       const Postcode = postcodeWindow.kakao?.Postcode ?? postcodeWindow.daum?.Postcode
 
       if (!Postcode) {
@@ -255,6 +301,7 @@ function HostRegisterPage({ user, onNavigate }: HostRegisterPageProps) {
           console.log('Kakao 우편번호 검색 결과:', data)
           const maps = postcodeWindow.kakao?.maps
           const address = data.roadAddress || data.autoRoadAddress || data.address
+          setMapCoordinates(null)
 
           if (maps) {
             const geocoder = new maps.services.Geocoder()
@@ -263,6 +310,7 @@ function HostRegisterPage({ user, onNavigate }: HostRegisterPageProps) {
                 const latitude = Number(results[0].y)
                 const longitude = Number(results[0].x)
                 const position = new maps.LatLng(latitude, longitude)
+                setMapCoordinates({ latitude, longitude })
 
                 console.log('검색 주소 좌표:', { latitude, longitude })
                 setIsMapVisible(true)
@@ -312,7 +360,8 @@ function HostRegisterPage({ user, onNavigate }: HostRegisterPageProps) {
             businessPostCode: data.zonecode,
             businessRoadAddress: address,
           }))
-          setSubmittedValues(null)
+          setApplicationResponse(null)
+          setSubmitError('')
           setIsAddressSearchLoading(false)
         },
         onclose: () => setIsAddressSearchLoading(false),
@@ -326,9 +375,9 @@ function HostRegisterPage({ user, onNavigate }: HostRegisterPageProps) {
     }
   }
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (!canSubmit) return
+    if (!canSubmit || isSubmitting) return
 
     const requestValues = {
       ...form,
@@ -339,8 +388,29 @@ function HostRegisterPage({ user, onNavigate }: HostRegisterPageProps) {
       introduction: form.introduction.trim(),
     }
 
-    setSubmittedValues(requestValues)
-    console.info('호스트 등록 임시 제출 값', requestValues)
+    setIsSubmitting(true)
+    setSubmitError('')
+    setApplicationResponse(null)
+
+    try {
+      const response = await createHostApplication({
+        ...requestValues,
+        latitude: mapCoordinates?.latitude ?? null,
+        longitude: mapCoordinates?.longitude ?? null,
+        agreements,
+      })
+
+      setApplicationResponse(response)
+      if (response.isHost) markAsHost()
+    } catch (error) {
+      setSubmitError(
+        error instanceof Error
+          ? error.message
+          : '호스트 등록 신청 중 오류가 발생했습니다.',
+      )
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -540,7 +610,8 @@ function HostRegisterPage({ user, onNavigate }: HostRegisterPageProps) {
                   checked={agreements[key]}
                   onChange={(event) => {
                     setAgreements((current) => ({ ...current, [key]: event.target.checked }))
-                    setSubmittedValues(null)
+                    setApplicationResponse(null)
+                    setSubmitError('')
                   }}
                 />
                 <span>{label} <em>필수</em></span>
@@ -548,26 +619,52 @@ function HostRegisterPage({ user, onNavigate }: HostRegisterPageProps) {
             ))}
           </section>
 
-          <button type="submit" className="host-register-submit" disabled={!canSubmit}>
-            호스트 등록 신청
+          <button
+            type="submit"
+            className="host-register-submit"
+            disabled={!canSubmit || isSubmitting}
+          >
+            {isSubmitting ? '신청 중...' : '호스트 등록 신청'}
           </button>
 
-          {submittedValues && (
-            <section className="host-submit-result" aria-live="polite">
-              <h2>임시 제출이 완료되었습니다.</h2>
-              <p>API 연동 전 확인용 데이터이며 실제로 저장되지 않습니다.</p>
-              <dl>
-                <div><dt>상호명</dt><dd>{submittedValues.businessName}</dd></div>
-                <div><dt>대표자명</dt><dd>{submittedValues.representativeName}</dd></div>
-                <div><dt>사업자등록번호</dt><dd>{submittedValues.businessNumber}</dd></div>
-                <div><dt>개업일자</dt><dd>{submittedValues.openingDate}</dd></div>
-                <div><dt>주소</dt><dd>{`${submittedValues.businessPostCode} ${submittedValues.businessRoadAddress} ${submittedValues.businessDetailAddress}`.trim()}</dd></div>
-                <div><dt>호스트 소개</dt><dd>{submittedValues.introduction || '입력하지 않음'}</dd></div>
-              </dl>
-            </section>
+          {submitError && (
+            <p className="host-submit-error" role="alert">{submitError}</p>
           )}
+
         </form>
       </div>
+
+      {applicationResponse && (
+        <div className="host-completion-layer" role="presentation">
+          <div className="host-completion-backdrop" aria-hidden="true" />
+          <section
+            className="host-completion-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="host-completion-title"
+          >
+            <div className="host-completion-icon" aria-hidden="true">✓</div>
+            <h2 id="host-completion-title">호스트 등록이 완료되었습니다.</h2>
+            <p>이제 TripFlow에서 숙소를 등록하고 관리할 수 있습니다.</p>
+            <div className="host-completion-actions">
+              <button
+                type="button"
+                className="host-completion-primary"
+                onClick={() => onNavigate('/host/dashboard')}
+              >
+                호스트 페이지로 이동
+              </button>
+              <button
+                type="button"
+                className="host-completion-secondary"
+                onClick={() => onNavigate('/')}
+              >
+                메인으로 돌아가기
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
     </main>
   )
 }

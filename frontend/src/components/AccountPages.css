@@ -152,6 +152,25 @@
 .host-register-card { padding: 54px 40px; text-align: center; }
 .host-register-icon { width: 72px; height: 72px; margin: 0 auto 22px; font-size: 38px; }
 
+.host-dashboard-card h2 {
+  margin: 0 0 10px;
+  color: var(--header-text);
+  font-size: 24px;
+}
+
+.host-dashboard-card button {
+  min-height: 48px;
+  margin-top: 26px;
+  padding: 0 24px;
+  color: #fff;
+  background: var(--header-primary);
+  border: 0;
+  border-radius: 14px;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
 .host-register-placeholder {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -502,6 +521,100 @@
   background: var(--header-border);
   cursor: not-allowed;
   opacity: 0.72;
+}
+
+.host-submit-error {
+  margin: 0;
+  padding: 14px 18px;
+  color: #b42318;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.28);
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 750;
+}
+
+.host-completion-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 160;
+  display: grid;
+  padding: 20px;
+  place-items: center;
+}
+
+.host-completion-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.58);
+  backdrop-filter: blur(4px);
+}
+
+.host-completion-dialog {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 460px);
+  padding: 36px;
+  color: var(--header-text);
+  background: var(--header-panel);
+  border: 1px solid var(--header-border);
+  border-radius: 24px;
+  box-shadow: 0 28px 80px rgba(15, 23, 42, 0.3);
+  box-sizing: border-box;
+  text-align: center;
+}
+
+.host-completion-icon {
+  display: grid;
+  width: 60px;
+  height: 60px;
+  margin: 0 auto 20px;
+  color: #fff;
+  background: var(--header-primary);
+  border-radius: 50%;
+  font-size: 28px;
+  font-weight: 900;
+  place-items: center;
+}
+
+.host-completion-dialog h2 {
+  margin: 0 0 12px;
+  color: var(--header-text);
+  font-size: 24px;
+  font-weight: 850;
+}
+
+.host-completion-dialog p {
+  color: var(--header-muted);
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.host-completion-actions {
+  display: grid;
+  gap: 10px;
+  margin-top: 28px;
+}
+
+.host-completion-actions button {
+  min-height: 48px;
+  border-radius: 14px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.host-completion-primary {
+  color: #fff;
+  background: var(--header-primary);
+  border: 1px solid var(--header-primary);
+}
+
+.host-completion-secondary {
+  color: var(--header-text);
+  background: var(--header-panel-soft);
+  border: 1px solid var(--header-border);
 }
 
 .host-submit-result {
