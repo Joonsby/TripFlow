@@ -9,7 +9,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 public class EmailVerificationStore {
 
-    private static final long CODE_TTL_SECONDS = 300;
+    private static final long CODE_TTL_SECONDS = 180;
     private static final long RESEND_COOLDOWN_SECONDS = 60;
 
     private final Map<String, VerificationValue> values = new ConcurrentHashMap<>();
