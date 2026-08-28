@@ -657,7 +657,7 @@
 }
 
 @media (max-width: 820px) {
-  .account-page { min-height: calc(100svh - 72px); padding: 24px 14px 72px; }
+  .account-page { min-height: calc(100svh - 64px); padding: 24px 14px 104px; }
   .account-page-inner,
   .mypage-card-grid,
   .mypage-card-grid > .account-card,
