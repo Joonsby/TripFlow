@@ -5,6 +5,7 @@ import type { AuthUser } from '../stores/authStore'
 export type SignupRequest = {
   email: string
   name: string
+  nickname: string | null
   password: string
   phoneNumber: string
 }
@@ -13,6 +14,7 @@ export type SignupResponse = {
   userId: number
   email: string
   name: string
+  nickname: string | null
   phoneNumber: string
 }
 
@@ -36,6 +38,14 @@ export type RefreshResponse = {
 export type EmailAvailabilityResponse = {
   email: string
   available: boolean
+}
+
+export type PhoneVerificationRequest = {
+  phoneNumber: string
+}
+
+export type PhoneVerificationConfirmRequest = PhoneVerificationRequest & {
+  code: string
 }
 
 export type AuthErrorCode =
@@ -189,5 +199,21 @@ export async function logout(): Promise<void> {
     })
   } finally {
     clearSessionMarker()
+  }
+}
+
+export async function sendSignupPhoneVerification(request: PhoneVerificationRequest): Promise<void> {
+  try {
+    await apiClient.post('/api/auth/signup/phone-verifications', request)
+  } catch (error) {
+    return toAuthApiError(error)
+  }
+}
+
+export async function verifySignupPhone(request: PhoneVerificationConfirmRequest): Promise<void> {
+  try {
+    await apiClient.post('/api/auth/signup/phone-verifications/verify', request)
+  } catch (error) {
+    return toAuthApiError(error)
   }
 }

@@ -1,22 +1,28 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
-import { AuthApiError, checkEmailAvailability, signup, type SignupRequest } from '../../api/auth'
+import {
+  AuthApiError, checkEmailAvailability, sendSignupPhoneVerification, signup,
+  verifySignupPhone, type SignupRequest,
+} from '../../api/auth'
+import PasswordFields from '../PasswordFields'
+import { validatePassword, validatePasswordConfirm } from '../../utils/passwordPolicy'
+import PhoneVerificationField from './PhoneVerificationField'
 import SocialLoginButtons from './SocialLoginButtons'
 
 type EmailStatus = 'idle' | 'invalid' | 'checking' | 'available' | 'unavailable' | 'error'
-type FieldErrors = Partial<Record<'email' | 'name' | 'password' | 'passwordConfirm' | 'phoneNumber' | 'terms', string>>
+type FieldErrors = Partial<Record<'email' | 'name' | 'nickname' | 'password' | 'passwordConfirm' | 'phoneNumber' | 'terms', string>>
 type Props = { notice: string; onSocialClick: (provider: string) => void; onSuccess: () => void }
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-const PHONE_PATTERN = /^01[016789]\d{7,8}$/
 const ERROR_MESSAGE = '회원가입 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.'
 
 export default function SignupForm({ notice, onSocialClick, onSuccess }: Props) {
   const [email, setEmail] = useState('')
   const [name, setName] = useState('')
+  const [nickname, setNickname] = useState('')
   const [password, setPassword] = useState('')
   const [passwordConfirm, setPasswordConfirm] = useState('')
-  const [passwordConfirmError, setPasswordConfirmError] = useState('')
   const [phoneNumber, setPhoneNumber] = useState('')
+  const [isPhoneVerified, setIsPhoneVerified] = useState(false)
   const [termsAccepted, setTermsAccepted] = useState(false)
   const [errors, setErrors] = useState<FieldErrors>({})
   const [formError, setFormError] = useState('')
@@ -71,25 +77,30 @@ export default function SignupForm({ notice, onSocialClick, onSuccess }: Props) 
     available: '사용 가능한 이메일입니다.', unavailable: '이미 사용 중인 이메일입니다.',
     error: '이메일 중복 확인에 실패했습니다.',
   }[emailStatus]
-  const canSubmit = emailStatus === 'available' && checkedEmail === email
+  const isEmailConfirmed = emailStatus === 'available' && checkedEmail === email
+  const canSubmit = isEmailConfirmed && isPhoneVerified
 
   const validate = (): FieldErrors => {
     const next: FieldErrors = {}
     const normalizedEmail = email.trim()
     const normalizedName = name.trim()
+    const normalizedNickname = nickname.trim()
     const normalizedPhone = phoneNumber.replace(/[\s-]/g, '')
     if (!normalizedEmail) next.email = '이메일을 입력해 주세요.'
     else if (!EMAIL_PATTERN.test(normalizedEmail)) next.email = '올바른 이메일 형식이 아닙니다.'
     else if (normalizedEmail.length > 50) next.email = '이메일은 50자 이하로 입력해 주세요.'
-    else if (!canSubmit) next.email = '이메일 중복 확인이 필요합니다.'
-    if (!normalizedName) next.name = '이름 또는 닉네임을 입력해 주세요.'
-    else if (normalizedName.length < 2 || normalizedName.length > 30) next.name = '이름 또는 닉네임은 2자 이상 30자 이하로 입력해 주세요.'
-    if (!password) next.password = '비밀번호를 입력해 주세요.'
-    else if (password.length < 8 || password.length > 64) next.password = '비밀번호는 8자 이상 64자 이하로 입력해 주세요.'
-    if (!passwordConfirm) next.passwordConfirm = '비밀번호 확인을 입력해 주세요.'
-    else if (password !== passwordConfirm) next.passwordConfirm = '비밀번호가 일치하지 않습니다.'
+    else if (!isEmailConfirmed) next.email = '이메일 중복 확인이 필요합니다.'
+    if (!normalizedName) next.name = '이름을 입력해 주세요.'
+    else if (normalizedName.length < 2 || normalizedName.length > 30) next.name = '이름은 2자 이상 30자 이하로 입력해 주세요.'
+    if (normalizedNickname && (normalizedNickname.length < 2 || normalizedNickname.length > 30)) {
+      next.nickname = '닉네임은 2자 이상 30자 이하로 입력해 주세요.'
+    }
+    const passwordViolation = validatePassword(password)
+    if (passwordViolation) next.password = passwordViolation
+    const passwordConfirmViolation = validatePasswordConfirm(password, passwordConfirm)
+    if (passwordConfirmViolation) next.passwordConfirm = passwordConfirmViolation
     if (!normalizedPhone) next.phoneNumber = '전화번호를 입력해 주세요.'
-    else if (!PHONE_PATTERN.test(normalizedPhone)) next.phoneNumber = '올바른 대한민국 휴대전화 번호를 입력해 주세요.'
+    else if (!isPhoneVerified) next.phoneNumber = '휴대폰 인증을 완료해 주세요.'
     if (!termsAccepted) next.terms = '이용약관 및 개인정보 처리방침에 동의해 주세요.'
     return next
   }
@@ -103,7 +114,7 @@ export default function SignupForm({ notice, onSocialClick, onSuccess }: Props) 
     }
     if (error.body.code === 'VALIDATION_FAILED' && error.body.errors) {
       const apiErrors = error.body.errors
-      setErrors({ email: apiErrors.email, name: apiErrors.name, password: apiErrors.password, phoneNumber: apiErrors.phoneNumber })
+      setErrors({ email: apiErrors.email, name: apiErrors.name, nickname: apiErrors.nickname, password: apiErrors.password, phoneNumber: apiErrors.phoneNumber })
       return
     }
     setFormError(ERROR_MESSAGE)
@@ -114,10 +125,12 @@ export default function SignupForm({ notice, onSocialClick, onSuccess }: Props) 
     if (requestInFlight.current) return
     const nextErrors = validate()
     setErrors(nextErrors)
-    setPasswordConfirmError(nextErrors.passwordConfirm ?? '')
     setFormError('')
     if (Object.keys(nextErrors).length) return
-    const request: SignupRequest = { email: email.trim(), name: name.trim(), password, phoneNumber: phoneNumber.replace(/[\s-]/g, '') }
+    const request: SignupRequest = {
+      email: email.trim(), name: name.trim(), nickname: nickname.trim() || null,
+      password, phoneNumber: phoneNumber.replace(/[\s-]/g, ''),
+    }
     requestInFlight.current = true
     setIsSubmitting(true)
     try { await signup(request); onSuccess() }
@@ -142,35 +155,30 @@ export default function SignupForm({ notice, onSocialClick, onSuccess }: Props) 
             : emailMessage ? <small className={`auth-modal-email-status auth-modal-email-status-${emailStatus}`} id="email-availability-message" aria-live="polite">{emailMessage}</small> : null}
         </label>
         <label className="login-modal-field">
-          <span>이름 또는 닉네임</span>
-          <input type="text" name="name" autoComplete="nickname" placeholder="이름 또는 닉네임을 입력해 주세요"
+          <span>이름</span>
+          <input type="text" name="name" autoComplete="name" placeholder="이름을 입력해 주세요"
             value={name} aria-invalid={errors.name ? 'true' : 'false'} aria-describedby={errors.name ? 'signup-name-error' : undefined}
             onChange={(event) => { setName(event.target.value); clearField('name') }} required />
           {errors.name && <small className="auth-modal-field-error" id="signup-name-error">{errors.name}</small>}
         </label>
         <label className="login-modal-field">
-          <span>비밀번호</span>
-          <input type="password" name="password" autoComplete="new-password" placeholder="비밀번호를 입력해 주세요"
-            value={password} aria-invalid={errors.password ? 'true' : 'false'} aria-describedby={errors.password ? 'signup-password-error' : undefined}
-            onChange={(event) => { setPassword(event.target.value); setPasswordConfirmError(''); setErrors((current) => ({ ...current, password: undefined, passwordConfirm: undefined })); setFormError('') }} required />
-          {errors.password && <small className="auth-modal-field-error" id="signup-password-error">{errors.password}</small>}
+          <span>닉네임 <i className="auth-modal-optional">선택</i></span>
+          <input type="text" name="nickname" autoComplete="nickname" placeholder="서비스에서 사용할 닉네임"
+            value={nickname} aria-invalid={errors.nickname ? 'true' : 'false'}
+            aria-describedby={errors.nickname ? 'signup-nickname-error' : undefined}
+            onChange={(event) => { setNickname(event.target.value); clearField('nickname') }} />
+          {errors.nickname && <small className="auth-modal-field-error" id="signup-nickname-error">{errors.nickname}</small>}
         </label>
-        <label className="login-modal-field">
-          <span>비밀번호 확인</span>
-          <input type="password" name="passwordConfirm" autoComplete="new-password" placeholder="비밀번호를 다시 입력해 주세요"
-            value={passwordConfirm} aria-invalid={errors.passwordConfirm || passwordConfirmError ? 'true' : 'false'}
-            aria-describedby={errors.passwordConfirm || passwordConfirmError ? 'password-confirm-error' : undefined}
-            onChange={(event) => { setPasswordConfirm(event.target.value); setPasswordConfirmError(''); clearField('passwordConfirm') }}
-            onBlur={() => { const error = passwordConfirm && password !== passwordConfirm ? '비밀번호가 일치하지 않습니다.' : ''; setPasswordConfirmError(error); setErrors((current) => ({ ...current, passwordConfirm: error || undefined })) }} required />
-          {(errors.passwordConfirm || passwordConfirmError) && <small className="auth-modal-field-error" id="password-confirm-error">{errors.passwordConfirm || passwordConfirmError}</small>}
-        </label>
-        <label className="login-modal-field">
-          <span>전화번호</span>
-          <input type="tel" name="phoneNumber" autoComplete="tel" placeholder="전화번호를 입력해 주세요"
-            value={phoneNumber} aria-invalid={errors.phoneNumber ? 'true' : 'false'} aria-describedby={errors.phoneNumber ? 'signup-phone-number-error' : undefined}
-            onChange={(event) => { setPhoneNumber(event.target.value); clearField('phoneNumber') }} required />
-          {errors.phoneNumber && <small className="auth-modal-field-error" id="signup-phone-number-error">{errors.phoneNumber}</small>}
-        </label>
+        <PasswordFields idPrefix="signup" password={password} passwordConfirm={passwordConfirm}
+          onPasswordChange={(value) => { setPassword(value); setErrors((current) => ({ ...current, password: undefined, passwordConfirm: undefined })); setFormError('') }}
+          onPasswordConfirmChange={(value) => { setPasswordConfirm(value); clearField('passwordConfirm') }}
+          passwordError={errors.password} passwordConfirmError={errors.passwordConfirm} />
+        <PhoneVerificationField idPrefix="signup" phoneNumber={phoneNumber}
+          onPhoneNumberChange={(value) => { setPhoneNumber(value); clearField('phoneNumber') }}
+          onSend={(phone) => sendSignupPhoneVerification({ phoneNumber: phone })}
+          onVerify={(phone, code) => verifySignupPhone({ phoneNumber: phone, code })}
+          onVerifiedChange={(verified) => { setIsPhoneVerified(verified); clearField('phoneNumber') }}
+          error={errors.phoneNumber} />
         <label className="auth-modal-agreement">
           <input type="checkbox" name="terms" checked={termsAccepted}
             onChange={(event) => { setTermsAccepted(event.target.checked); clearField('terms') }} required />

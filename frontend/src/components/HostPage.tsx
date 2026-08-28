@@ -109,7 +109,7 @@ function Dashboard({ user, onNavigate }: Pick<HostPageProps, 'user' | 'onNavigat
       <header className="host-page-heading host-page-heading-row">
         <div>
           <span>HOST DASHBOARD</span>
-          <h1>안녕하세요, {user.name} 호스트님</h1>
+          <h1>안녕하세요, {user.nickname?.trim() || user.name} 호스트님</h1>
           <p>제주 바다 스테이의 오늘 운영 현황입니다.</p>
         </div>
         <button type="button" className="host-secondary-button" onClick={() => onNavigate('/host/reservations')}>예약 전체보기</button>
