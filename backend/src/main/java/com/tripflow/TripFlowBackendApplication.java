@@ -1,7 +1,7 @@
 package com.tripflow;
 
 import com.tripflow.auth.config.AuthProperties;
-import com.tripflow.auth.config.SmsProperties;
+import com.tripflow.account.config.SmsProperties;
 import com.tripflow.global.config.CorsProperties;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

@@ -1,4 +1,4 @@
-package com.tripflow.auth.dto;
+package com.tripflow.account.dto.signup;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

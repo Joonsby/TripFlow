@@ -1,4 +1,4 @@
-package com.tripflow.auth.cookie;
+package com.tripflow.auth.token;
 
 import java.time.Duration;
 

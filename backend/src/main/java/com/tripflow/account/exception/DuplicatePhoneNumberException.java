@@ -1,4 +1,4 @@
-package com.tripflow.auth.exception;
+package com.tripflow.account.exception;
 
 public class DuplicatePhoneNumberException extends RuntimeException {
 

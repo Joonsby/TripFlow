@@ -1,4 +1,4 @@
-package com.tripflow.auth.verification;
+package com.tripflow.account.verification;
 
 import org.springframework.stereotype.Component;
 

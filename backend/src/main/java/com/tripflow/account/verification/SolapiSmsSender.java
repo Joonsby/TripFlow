@@ -1,4 +1,4 @@
-package com.tripflow.auth.sms;
+package com.tripflow.account.verification;
 
 import com.solapi.sdk.SolapiClient;
 import com.solapi.sdk.message.exception.SolapiEmptyResponseException;
@@ -6,7 +6,7 @@ import com.solapi.sdk.message.exception.SolapiMessageNotReceivedException;
 import com.solapi.sdk.message.exception.SolapiUnknownException;
 import com.solapi.sdk.message.model.Message;
 import com.solapi.sdk.message.service.DefaultMessageService;
-import com.tripflow.auth.config.SmsProperties;
+import com.tripflow.account.config.SmsProperties;
 import org.springframework.stereotype.Component;
 
 @Component

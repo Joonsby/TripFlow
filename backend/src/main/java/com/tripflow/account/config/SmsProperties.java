@@ -1,4 +1,4 @@
-package com.tripflow.auth.config;
+package com.tripflow.account.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 

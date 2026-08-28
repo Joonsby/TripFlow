@@ -1,4 +1,4 @@
-package com.tripflow.auth.refresh;
+package com.tripflow.auth.token;
 
 import java.time.LocalDateTime;
 
