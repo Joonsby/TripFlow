@@ -1,4 +1,5 @@
 import type { AuthUser } from '../stores/authStore'
+import AccountProfileCard from './AccountProfileCard'
 import './AccountPages.css'
 
 type MyPageProps = {
@@ -17,27 +18,7 @@ function MyPage({ user, onNavigate }: MyPageProps) {
         </header>
 
         <div className="mypage-card-grid">
-          <section className="account-card" aria-labelledby="profile-title">
-            <div className="account-section-heading">
-              <div className="account-avatar" aria-hidden="true">
-                {user.name.trim().charAt(0) || '?'}
-              </div>
-              <div>
-                <h2 id="profile-title">사용자 기본 정보</h2>
-                <p>TripFlow에 등록된 계정 정보입니다.</p>
-              </div>
-            </div>
-            <dl className="account-info-list">
-              <div>
-                <dt>이름</dt>
-                <dd>{user.name}</dd>
-              </div>
-              <div>
-                <dt>이메일</dt>
-                <dd>{user.email}</dd>
-              </div>
-            </dl>
-          </section>
+          <AccountProfileCard user={user} />
 
           <section className="host-cta-card" aria-labelledby="host-cta-title">
             <div className="host-cta-icon" aria-hidden="true">⌂</div>

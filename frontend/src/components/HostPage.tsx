@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import type { AuthUser } from '../stores/authStore'
 import { lockBodyScroll } from '../utils/bodyScrollLock'
 import stayAtlas from '../assets/tripflow-stays-atlas.png'
+import MobileServiceCard from './MobileServiceCard'
+import AccountProfileCard from './AccountProfileCard'
 import './AccountPages.css'
 import './HostManagement.css'
 
@@ -96,6 +98,12 @@ const formatMobilePhoneNumber = (value: string) => {
 }
 
 function Dashboard({ user, onNavigate }: Pick<HostPageProps, 'user' | 'onNavigate'>) {
+  const recentReservations = [
+    ['TF-260827-1042', '김민수', '디럭스 오션뷰', '8.28 → 8.30', '2박', '₩360,000', '예약 확정'],
+    ['TF-260826-1038', '이서연', '스탠다드 더블', '8.28 → 8.29', '1박', '₩140,000', '예약 확정'],
+    ['TF-260825-1029', '최유진', '패밀리 스위트', '9.02 → 9.04', '2박', '₩520,000', '결제 완료'],
+  ]
+
   return (
     <>
       <header className="host-page-heading host-page-heading-row">
@@ -125,7 +133,34 @@ function Dashboard({ user, onNavigate }: Pick<HostPageProps, 'user' | 'onNavigat
       </div>
       <section className="host-panel">
         <div className="host-panel-heading"><div><span>RECENT</span><h2>최근 예약</h2></div><button type="button" className="host-inline-link" onClick={() => onNavigate('/host/reservations')}>전체보기 →</button></div>
-        <div className="host-data-table host-recent-table"><div className="host-table-row is-head"><span>예약번호</span><span>게스트</span><span>객실</span><span>일정</span><span>결제 금액</span><span>상태</span></div>{[['TF-260827-1042', '김민수', '디럭스 오션뷰', '8.28 ~ 8.30', '₩360,000', '예약 확정'], ['TF-260826-1038', '이서연', '스탠다드 더블', '8.28 ~ 8.29', '₩140,000', '예약 확정'], ['TF-260825-1029', '최유진', '패밀리 스위트', '9.02 ~ 9.04', '₩520,000', '결제 완료']].map((row) => <div className="host-table-row" key={row[0]}>{row.map((value, index) => <span key={value} data-label={['예약번호', '게스트', '객실', '일정', '결제 금액', '상태'][index]} className={index === 5 ? 'host-booking-status' : ''}>{value}</span>)}</div>)}</div>
+        <div className="host-recent-reservation-list">
+          {recentReservations.map(([number, guest, room, dates, nights, amount, status]) => (
+            <article className="host-recent-reservation-card" key={number}>
+              <div className="host-recent-number">
+                <small>{number}</small>
+                <span className={`host-booking-status status-${status.replace(' ', '-')}`}>{status}</span>
+              </div>
+              <div className="host-recent-guest"><strong>{guest}</strong><span>{room}</span></div>
+              <div className="host-recent-schedule"><i className="host-calendar-icon" aria-hidden="true" /><div><strong>{dates} · {nights}</strong><span>{nights}</span></div></div>
+              <div className="host-recent-amount"><small>결제 금액</small><strong>{amount}</strong></div>
+            </article>
+          ))}
+        </div>
+        <div className="host-recent-mobile-list">
+          {recentReservations.map(([number, guest, room, dates, nights, amount, status]) => (
+            <MobileServiceCard
+              key={number}
+              className="host-reservation-card"
+              headerStart={<small>{number}</small>}
+              headerEnd={<span className={`host-booking-status status-${status.replace(' ', '-')}`}>{status}</span>}
+              footerLabel={<small>결제 금액</small>}
+              footerValue={<strong>{amount}</strong>}
+            >
+              <div className="host-reservation-card-primary"><strong>{guest}</strong><span>{room}</span></div>
+              <div className="host-reservation-card-meta"><i className="host-calendar-icon" aria-hidden="true" /><span>{dates} · {nights}</span></div>
+            </MobileServiceCard>
+          ))}
+        </div>
       </section>
     </>
   )
@@ -560,12 +595,73 @@ function Rooms() {
 }
 
 function Reservations() {
+  const reservations = [
+    ['TF-260827-1042', '김민수', '디럭스 오션뷰', '8.28 ~ 8.30 · 2박', '성인 2명', '₩360,000', '예약 확정'],
+    ['TF-260826-1038', '이서연', '스탠다드 더블', '8.28 ~ 8.29 · 1박', '성인 2명', '₩140,000', '체크인 예정'],
+    ['TF-260825-1029', '최유진', '패밀리 스위트', '9.02 ~ 9.04 · 2박', '성인 4명', '₩520,000', '예약 확정'],
+    ['TF-260824-1021', '정하늘', '디럭스 오션뷰', '8.25 ~ 8.27 · 2박', '성인 2명', '₩340,000', '이용 완료'],
+    ['TF-260820-0998', '박도윤', '스탠다드 더블', '9.10 ~ 9.12 · 2박', '성인 1명', '₩280,000', '취소'],
+  ]
+
   return (
     <>
       <header className="host-page-heading"><span>RESERVATIONS</span><h1>예약 관리</h1><p>예약 현황과 체크인 일정을 확인합니다.</p></header>
       <section className="host-reservation-kpis"><div><span>체크인 예정</span><strong>3</strong><small>오늘</small></div><div><span>숙박 중</span><strong>4</strong><small>현재</small></div><div><span>이번 달 예약</span><strong>18</strong><small>확정 기준</small></div></section>
       <div className="host-reservation-toolbar"><div className="host-filter-tabs"><button type="button" className="is-active">전체 18</button><button type="button">예약 확정 7</button><button type="button">체크인 예정 3</button><button type="button">이용 완료 6</button><button type="button">취소 2</button></div><div className="host-reservation-filters"><input type="search" aria-label="예약 검색" placeholder="예약번호 또는 게스트 검색" /><button type="button" className="host-secondary-button">기간 선택</button></div></div>
-      <section className="host-panel host-reservation-panel"><div className="host-data-table host-reservation-table"><div className="host-table-row is-head"><span>예약번호</span><span>게스트</span><span>숙소 / 객실</span><span>숙박 일정</span><span>인원</span><span>결제 금액</span><span>상태</span><span></span></div>{[['TF-260827-1042', '김민수', '디럭스 오션뷰', '8.28 ~ 8.30 · 2박', '성인 2명', '₩360,000', '예약 확정'], ['TF-260826-1038', '이서연', '스탠다드 더블', '8.28 ~ 8.29 · 1박', '성인 2명', '₩140,000', '체크인 예정'], ['TF-260825-1029', '최유진', '패밀리 스위트', '9.02 ~ 9.04 · 2박', '성인 4명', '₩520,000', '예약 확정'], ['TF-260824-1021', '정하늘', '디럭스 오션뷰', '8.25 ~ 8.27 · 2박', '성인 2명', '₩340,000', '이용 완료'], ['TF-260820-0998', '박도윤', '스탠다드 더블', '9.10 ~ 9.12 · 2박', '성인 1명', '₩280,000', '취소']].map((row) => <div className="host-table-row" key={row[0]}>{row.map((value, index) => <span key={`${row[0]}-${index}`} data-label={['예약번호', '게스트', '객실', '숙박 일정', '인원', '결제 금액', '상태'][index]} className={index === 6 ? `host-booking-status status-${value.replace(' ', '-')}` : ''}>{value}</span>)}<span><button type="button" className="host-inline-link">상세보기</button></span></div>)}</div></section>
+      <section className="host-panel host-reservation-panel">
+        <div className="host-reservation-desktop-list">
+          {reservations.map(([reservationNumber, guest, room, schedule, people, amount, status]) => {
+            const [dates, nights] = schedule.replace(' ~ ', ' → ').split(' · ')
+            return (
+              <article className="host-reservation-desktop-card" key={reservationNumber}>
+                <div className="host-reservation-number"><small>{reservationNumber}</small><span className={`host-booking-status status-${status.replace(' ', '-')}`}>{status}</span></div>
+                <div className="host-reservation-guest"><strong>{guest}</strong><span>{room}</span></div>
+                <div className="host-reservation-schedule"><i className="host-calendar-icon" aria-hidden="true" /><div><strong>{dates}</strong><span>{nights} · {people}</span></div></div>
+                <div className="host-reservation-amount"><small>결제 금액</small><strong>{amount}</strong></div>
+              </article>
+            )
+          })}
+        </div>
+        <div className="host-reservation-mobile-list">
+          {reservations.map(([reservationNumber, guest, room, schedule, people, amount, status]) => (
+            <MobileServiceCard
+              key={reservationNumber}
+              className="host-reservation-card"
+              headerStart={<small>{reservationNumber}</small>}
+              headerEnd={<span className={`host-booking-status status-${status.replace(' ', '-')}`}>{status}</span>}
+              footerLabel={<small>결제 금액</small>}
+              footerValue={<strong>{amount}</strong>}
+            >
+              <div className="host-reservation-card-primary"><strong>{guest}</strong><span>{room}</span></div>
+              <div className="host-reservation-card-meta"><i className="host-calendar-icon" aria-hidden="true" /><span>{schedule.replace(' ~ ', ' → ')}</span><small>{people}</small></div>
+            </MobileServiceCard>
+          ))}
+        </div>
+      </section>
+    </>
+  )
+}
+
+function HostProfile({ user, onNavigate }: Pick<HostPageProps, 'user' | 'onNavigate'>) {
+  return (
+    <>
+      <header className="host-page-heading">
+        <span>HOST PROFILE</span>
+        <h1>호스트 마이페이지</h1>
+        <p>호스트 모드를 유지하면서 계정 정보와 운영 화면을 관리합니다.</p>
+      </header>
+      <div className="mypage-card-grid host-profile-grid">
+        <AccountProfileCard user={user} title="호스트 기본 정보" description="여행자 계정과 함께 사용하는 TripFlow 계정 정보입니다." />
+        <section className="host-cta-card" aria-labelledby="host-profile-mode-title">
+          <div className="host-cta-icon" aria-hidden="true">⌂</div>
+          <div className="host-cta-copy">
+            <span>TRAVELER</span>
+            <h2 id="host-profile-mode-title">여행자 모드로 전환</h2>
+            <p>계정 정보는 그대로 유지하고 숙소 검색 화면으로 이동합니다.</p>
+          </div>
+          <button type="button" onClick={() => onNavigate('/')}>여행자 화면으로 이동</button>
+        </section>
+      </div>
     </>
   )
 }
@@ -579,6 +675,7 @@ function HostPage({ user, pathname, onNavigate }: HostPageProps) {
         {pathname === '/host/properties/new' && <PropertyForm onNavigate={onNavigate} />}
         {pathname.startsWith('/host/rooms') && <Rooms />}
         {pathname.startsWith('/host/reservations') && <Reservations />}
+        {pathname === '/host/profile' && <HostProfile user={user} onNavigate={onNavigate} />}
       </div>
     </main>
   )
