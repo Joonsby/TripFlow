@@ -109,6 +109,7 @@ public class AuthService {
                 user.getUserId(),
                 user.getEmail(),
                 user.getName(),
+                user.getNickname(),
                 hostMapper.existsApprovedByUserId(user.getUserId())
         );
     }
