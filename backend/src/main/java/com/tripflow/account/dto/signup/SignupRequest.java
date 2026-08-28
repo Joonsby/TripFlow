@@ -1,5 +1,6 @@
 package com.tripflow.account.dto.signup;
 
+import com.tripflow.global.validation.ValidPassword;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -18,8 +19,7 @@ public record SignupRequest(
         String name,
 
         @NotBlank(message = "비밀번호를 입력해주세요.")
-        @Size(min = 8, max = 64,
-                message = "비밀번호는 8자 이상 64자 이하로 입력해주세요.")
+        @ValidPassword
         String password,
 
         @NotBlank(message = "전화번호를 입력해주세요.")
