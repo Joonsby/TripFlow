@@ -3,6 +3,7 @@ import type { AuthUser } from '../stores/authStore'
 import DateRangePicker from './DateRangePicker'
 import GuestPicker from './GuestPicker'
 import UserProfileMenu from './UserProfileMenu'
+import SidebarActionButton from './SidebarActionButton'
 import { headerMessages, type Locale } from '../i18n'
 import { useLocaleStore } from '../stores/localeStore'
 import { lockBodyScroll } from '../utils/bodyScrollLock'
@@ -179,12 +180,17 @@ function Header({ authenticatedUser, onAuthClick, onLogout, onNavigate }: Header
         <div className="header-actions" aria-label={t.userMenu}>
           {authenticatedUser ? (
             <div className="authenticated-actions">
+              {authenticatedUser.isHost && (
+                <button type="button" className="mobile-host-mode-button" onClick={() => navigate('/host/dashboard')}>
+                  {t.hostMode}
+                </button>
+              )}
               <UserProfileMenu
                 user={authenticatedUser}
                 items={[
                   { label: t.myPage, onSelect: () => navigate('/mypage') },
                   ...(authenticatedUser.isHost
-                    ? [{ label: t.hostMode, onSelect: () => navigate('/host/dashboard') }]
+                    ? [{ label: t.hostMode, className: 'profile-host-mode-item', onSelect: () => navigate('/host/dashboard') }]
                     : []),
                   { label: t.reservations, onSelect: () => navigate('/reservations') },
                   { label: t.wishlist, onSelect: () => navigate('/wishlist') },
@@ -206,9 +212,10 @@ function Header({ authenticatedUser, onAuthClick, onLogout, onNavigate }: Header
           )}
 
           <div className="language-menu" ref={languageMenuRef}>
-            <button
+            <SidebarActionButton
               type="button"
               className="language-button"
+              isActive={isLanguageOpen}
               aria-label={`${t.language}: ${selectedLanguage.label}`}
               aria-haspopup="listbox"
               aria-expanded={isLanguageOpen}
@@ -225,7 +232,7 @@ function Header({ authenticatedUser, onAuthClick, onLogout, onNavigate }: Header
               <span className="mobile-action-label">
                 {t.language}: {selectedLanguage.label}
               </span>
-            </button>
+            </SidebarActionButton>
 
             {isLanguageOpen && (
               <div className="language-list" role="listbox">
@@ -248,9 +255,10 @@ function Header({ authenticatedUser, onAuthClick, onLogout, onNavigate }: Header
             )}
           </div>
 
-          <button
+          <SidebarActionButton
             type="button"
             className="theme-toggle"
+            activeBorder={false}
             aria-label={isDarkMode ? t.lightMode : t.darkMode}
             aria-pressed={isDarkMode}
             onClick={() => setTheme(isDarkMode ? 'light' : 'dark')}
@@ -276,7 +284,7 @@ function Header({ authenticatedUser, onAuthClick, onLogout, onNavigate }: Header
             <span className="mobile-action-label">
               {isDarkMode ? t.lightMode : t.darkMode}
             </span>
-          </button>
+          </SidebarActionButton>
         </div>
         </div>
       </nav>

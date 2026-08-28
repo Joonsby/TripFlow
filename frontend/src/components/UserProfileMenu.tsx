@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 import type { AuthUser } from '../stores/authStore'
+import SidebarActionButton from './SidebarActionButton'
 import './UserProfileMenu.css'
 
 export type UserProfileMenuItem = {
   label: string
   onSelect: () => void
+  className?: string
 }
 
 type UserProfileMenuProps = {
@@ -58,9 +60,10 @@ function UserProfileMenu({
 
   return (
     <div className="profile-menu" ref={menuRef}>
-      <button
+      <SidebarActionButton
         type="button"
         className="profile-button"
+        isActive={isOpen}
         aria-haspopup="menu"
         aria-expanded={isOpen}
         onClick={() => setIsOpen((open) => !open)}
@@ -72,7 +75,7 @@ function UserProfileMenu({
         <svg className="profile-chevron" viewBox="0 0 20 20" aria-hidden="true">
           <path d="m6 8 4 4 4-4" />
         </svg>
-      </button>
+      </SidebarActionButton>
 
       {isOpen && (
         <div className="profile-dropdown" role="menu">
@@ -81,6 +84,7 @@ function UserProfileMenu({
               type="button"
               role="menuitem"
               key={item.label}
+              className={item.className}
               onClick={() => selectItem(item)}
             >
               {item.label}

@@ -15,8 +15,7 @@
   cursor: pointer;
 }
 
-.profile-button:hover,
-.profile-button[aria-expanded='true'] {
+.profile-button:hover {
   color: var(--header-primary-hover);
   border-color: var(--header-primary);
 }

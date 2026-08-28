@@ -1,0 +1,17 @@
+.sidebar-action-button[data-active-border='true'].is-active {
+  color: var(--header-primary-hover);
+  border-color: var(--header-primary);
+}
+
+.sidebar-action-button[data-active-border='true']:not(.is-active),
+.sidebar-action-button[data-active-border='true']:not(.is-active):hover,
+.sidebar-action-button[data-active-border='true']:not(.is-active):focus-visible {
+  border-color: var(--header-border);
+}
+
+.sidebar-action-button[data-active-border='false'],
+.sidebar-action-button[data-active-border='false']:hover,
+.sidebar-action-button[data-active-border='false']:focus-visible,
+.sidebar-action-button[data-active-border='false'].is-active {
+  border-color: var(--header-border);
+}
