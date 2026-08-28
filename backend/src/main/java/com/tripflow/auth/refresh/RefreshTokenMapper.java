@@ -8,13 +8,9 @@ public interface RefreshTokenMapper {
 
     int insert(RefreshToken refreshToken);
 
-    RefreshToken findByTokenHash(
-            @Param("tokenHash") String tokenHash
-    );
+    RefreshToken findByTokenHash(@Param("tokenHash") String tokenHash);
 
-    int deleteByTokenHash(
-            @Param("tokenHash") String tokenHash
-    );
+    int deleteByTokenHash(@Param("tokenHash") String tokenHash);
 
     int deleteExpiredTokens();
 }

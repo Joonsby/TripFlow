@@ -30,16 +30,11 @@ public class JwtConfig {
             keyBytes = Base64.getDecoder()
                     .decode(properties.jwtSecret());
         } catch (IllegalArgumentException e) {
-            throw new IllegalStateException(
-                    "JWT_SECRET은 Base64 형식이어야 합니다.",
-                    e
-            );
+            throw new IllegalStateException("JWT_SECRET은 Base64 형식이어야 합니다.", e);
         }
 
         if (keyBytes.length < 32) {
-            throw new IllegalStateException(
-                    "JWT_SECRET은 최소 32바이트 이상이어야 합니다."
-            );
+            throw new IllegalStateException("JWT_SECRET은 최소 32바이트 이상이어야 합니다.");
         }
 
         return new SecretKeySpec(keyBytes, "HmacSHA256");
@@ -51,8 +46,7 @@ public class JwtConfig {
                 .algorithm(JWSAlgorithm.HS256)
                 .build();
 
-        JWKSource<SecurityContext> jwkSource =
-                new ImmutableJWKSet<>(new JWKSet(jwk));
+        JWKSource<SecurityContext> jwkSource = new ImmutableJWKSet<>(new JWKSet(jwk));
 
         return new NimbusJwtEncoder(jwkSource);
     }

@@ -9,17 +9,11 @@ public interface UserMapper {
 
     boolean existsByEmail(@Param("email") String email);
 
-    boolean existsByPhoneNumber(
-            @Param("phoneNumber") String phoneNumber
-    );
+    boolean existsByPhoneNumber(@Param("phoneNumber") String phoneNumber);
 
-    User findByEmail(
-            @Param("email") String email
-    );
+    User findByEmail(@Param("email") String email);
 
     int insertUser(User user);
 
-    User findById(
-            @Param("userId") Integer userId
-    );
+    User findById(@Param("userId") Integer userId);
 }

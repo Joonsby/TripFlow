@@ -39,11 +39,7 @@ class HostApplicationServiceTest {
         hostMapper = mock(HostMapper.class);
         userMapper = mock(UserMapper.class);
         businessVerificationService = mock(BusinessVerificationService.class);
-        service = new HostApplicationService(
-                hostMapper,
-                userMapper,
-                businessVerificationService
-        );
+        service = new HostApplicationService(hostMapper, userMapper, businessVerificationService);
     }
 
     @Test
@@ -76,10 +72,7 @@ class HostApplicationServiceTest {
         when(businessVerificationService.verify(any()))
                 .thenReturn(new BusinessVerificationResponse(false, "verification failed"));
 
-        assertThrows(
-                BusinessVerificationFailedException.class,
-                () -> service.apply(13, request())
-        );
+        assertThrows(BusinessVerificationFailedException.class, () -> service.apply(13, request()));
 
         verify(hostMapper, never()).insertHost(any());
     }

@@ -4,9 +4,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
 
-public record NtsBusinessValidateRequest (
+public record NtsBusinessValidateRequest(
         List<Business> businesses
-){
+) {
     public record Business(
             @JsonProperty("b_no")
             String businessNumber,

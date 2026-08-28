@@ -17,14 +17,8 @@ public class RefreshTokenCookieProvider {
 
     private final AuthProperties authProperties;
 
-    public ResponseCookie create(
-            String refreshToken,
-            long maxAgeSeconds
-    ) {
-        return ResponseCookie.from(
-                        COOKIE_NAME,
-                        refreshToken
-                )
+    public ResponseCookie create(String refreshToken, long maxAgeSeconds) {
+        return ResponseCookie.from(COOKIE_NAME, refreshToken)
                 .httpOnly(true)
                 .secure(authProperties.cookieSecure())
                 .sameSite("Lax")
@@ -34,10 +28,7 @@ public class RefreshTokenCookieProvider {
     }
 
     public ResponseCookie delete() {
-        return ResponseCookie.from(
-                        COOKIE_NAME,
-                        ""
-                )
+        return ResponseCookie.from(COOKIE_NAME, "")
                 .httpOnly(true)
                 .secure(authProperties.cookieSecure())
                 .sameSite("Lax")

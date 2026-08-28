@@ -34,27 +34,26 @@ public class HostApplicationService {
             throw new IllegalArgumentException("존재하지 않는 회원입니다.");
         }
 
-        if(hostMapper.existsByUserId(userId)){
+        if (hostMapper.existsByUserId(userId)) {
             throw new DuplicateHostApplicationException();
         }
 
         String businessNumber = normalizeBusinessNumber(request.businessNumber());
 
-        if(hostMapper.existsByBusinessNumber(businessNumber)){
+        if (hostMapper.existsByBusinessNumber(businessNumber)) {
             throw new DuplicateBusinessNumberException();
         }
 
         validateRequiredAgreements(request);
 
-        BusinessVerificationResponse verification =
-                businessVerificationService.verify(
-                        new BusinessVerificationRequest(
-                                request.businessName().trim(),
-                                request.representativeName().trim(),
-                                businessNumber,
-                                request.openingDate()
-                        )
-                );
+        BusinessVerificationResponse verification = businessVerificationService.verify(
+                new BusinessVerificationRequest(
+                        request.businessName().trim(),
+                        request.representativeName().trim(),
+                        businessNumber,
+                        request.openingDate()
+                )
+        );
 
         if (!verification.verified()) {
             throw new BusinessVerificationFailedException(verification.message());
@@ -84,9 +83,7 @@ public class HostApplicationService {
         int insertedRows = hostMapper.insertHost(host);
 
         if (insertedRows != 1 || host.getHostId() == null) {
-            throw new IllegalStateException(
-                    "호스트 등록 신청을 저장하지 못했습니다."
-            );
+            throw new IllegalStateException("호스트 등록 신청을 저장하지 못했습니다.");
         }
 
         return new HostApplicationResponse(
@@ -105,9 +102,7 @@ public class HostApplicationService {
                 || !request.agreements().hostPolicy()
                 || !request.agreements().privacy()
                 || !request.agreements().informationAccuracy()) {
-            throw new IllegalArgumentException(
-                    "필수 약관에 모두 동의해야 합니다."
-            );
+            throw new IllegalArgumentException("필수 약관에 모두 동의해야 합니다.");
         }
     }
 
@@ -115,9 +110,7 @@ public class HostApplicationService {
         String normalized = businessNumber.replaceAll("\\D", "");
 
         if (normalized.length() != 10) {
-            throw new IllegalArgumentException(
-                    "사업자등록번호는 숫자 10자리여야 합니다."
-            );
+            throw new IllegalArgumentException("사업자등록번호는 숫자 10자리여야 합니다.");
         }
 
         return normalized;

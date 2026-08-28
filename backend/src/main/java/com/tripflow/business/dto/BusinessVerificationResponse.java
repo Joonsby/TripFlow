@@ -1,8 +1,7 @@
 package com.tripflow.business.dto;
 
-public record BusinessVerificationResponse (
+public record BusinessVerificationResponse(
         boolean verified,
         String message
-)
-{
+) {
 }

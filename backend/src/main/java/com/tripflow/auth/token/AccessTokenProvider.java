@@ -23,10 +23,7 @@ public class AccessTokenProvider {
     private final JwtEncoder jwtEncoder;
     private final AuthProperties authProperties;
 
-    public String createAccessToken(
-            Integer userId,
-            String email
-    ) {
+    public String createAccessToken(Integer userId, String email) {
         Instant now = Instant.now();
         Instant expiresAt = now.plus(
                 authProperties.accessTokenMinutes(),
@@ -46,8 +43,7 @@ public class AccessTokenProvider {
                 .type("JWT")
                 .build();
 
-        JwtEncoderParameters parameters =
-                JwtEncoderParameters.from(header, claims);
+        JwtEncoderParameters parameters = JwtEncoderParameters.from(header, claims);
 
         return jwtEncoder.encode(parameters)
                 .getTokenValue();

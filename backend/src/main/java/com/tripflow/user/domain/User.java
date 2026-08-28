@@ -15,12 +15,7 @@ public class User {
     private String phoneNumber;
     private String email;
 
-    public User(
-            String passwordHash,
-            String name,
-            String phoneNumber,
-            String email
-    ) {
+    public User(String passwordHash, String name, String phoneNumber, String email) {
         this.passwordHash = passwordHash;
         this.name = name;
         this.phoneNumber = phoneNumber;

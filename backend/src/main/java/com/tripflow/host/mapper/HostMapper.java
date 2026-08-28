@@ -9,9 +9,7 @@ public interface HostMapper {
 
     boolean existsByUserId(@Param("userId") Integer userId);
 
-    boolean existsByBusinessNumber(
-            @Param("businessNumber") String businessNumber
-    );
+    boolean existsByBusinessNumber(@Param("businessNumber") String businessNumber);
 
     boolean existsApprovedByUserId(@Param("userId") Integer userId);
 
