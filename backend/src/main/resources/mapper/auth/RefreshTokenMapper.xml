@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.tripflow.auth.refresh.RefreshTokenMapper">
-    <resultMap id="refreshTokenResultMap" type="com.tripflow.auth.refresh.RefreshToken">
+<mapper namespace="com.tripflow.auth.token.RefreshTokenMapper">
+    <resultMap id="refreshTokenResultMap" type="com.tripflow.auth.token.RefreshToken">
         <id property="refreshTokenId" column="refresh_token_id"/>
 
         <result property="userId" column="user_id"/>
@@ -40,6 +40,11 @@
     <delete id="deleteByTokenHash">
         DELETE FROM refresh_token
         WHERE token_hash = #{tokenHash}
+    </delete>
+
+    <delete id="deleteAllByUserId">
+        DELETE FROM refresh_token
+        WHERE user_id = #{userId}
     </delete>
 
     <delete id="deleteExpiredTokens">

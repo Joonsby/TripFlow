@@ -13,7 +13,17 @@ public interface UserMapper {
 
     User findByEmail(@Param("email") String email);
 
+    User findByNameAndPhoneNumber(
+            @Param("name") String name,
+            @Param("phoneNumber") String phoneNumber
+    );
+
     int insertUser(User user);
+
+    int updatePassword(
+            @Param("userId") Integer userId,
+            @Param("passwordHash") String passwordHash
+    );
 
     User findById(@Param("userId") Integer userId);
 }

@@ -43,6 +43,14 @@
         WHERE email = #{email}
     </select>
 
+    <select id="findByNameAndPhoneNumber" resultMap="userResultMap">
+        SELECT
+            <include refid="userColumns"/>
+        FROM user_info
+        WHERE name = #{name}
+          AND phone_number = #{phoneNumber}
+    </select>
+
     <insert id="insertUser" parameterType="com.tripflow.user.domain.User" useGeneratedKeys="true" keyProperty="userId" keyColumn="user_id">
         INSERT INTO user_info (
             password_hash,
@@ -59,6 +67,12 @@
             NOW()
         )
     </insert>
+
+    <update id="updatePassword">
+        UPDATE user_info
+        SET password_hash = #{passwordHash}
+        WHERE user_id = #{userId}
+    </update>
 
     <select id="findById" resultMap="userResultMap">
         SELECT

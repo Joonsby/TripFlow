@@ -1,7 +1,10 @@
 package com.tripflow.global.exception;
 
-import com.tripflow.auth.exception.DuplicateEmailException;
-import com.tripflow.auth.exception.DuplicatePhoneNumberException;
+import com.tripflow.account.exception.DuplicateEmailException;
+import com.tripflow.account.exception.DuplicatePhoneNumberException;
+import com.tripflow.account.exception.InvalidPasswordResetTokenException;
+import com.tripflow.account.exception.PasswordConfirmationMismatchException;
+import com.tripflow.account.exception.PhoneVerificationTargetMismatchException;
 import com.tripflow.auth.exception.InvalidLoginException;
 import com.tripflow.host.exception.BusinessVerificationFailedException;
 import com.tripflow.host.exception.DuplicateBusinessNumberException;
@@ -110,6 +113,42 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.UNAUTHORIZED)
                 .body(Map.of(
                         "code", "INVALID_CREDENTIALS",
+                        "message", exception.getMessage()
+                ));
+    }
+
+    @ExceptionHandler(PhoneVerificationTargetMismatchException.class)
+    public ResponseEntity<Map<String, String>> handlePhoneVerificationTargetMismatch(
+            PhoneVerificationTargetMismatchException exception
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(Map.of(
+                        "code", "PHONE_VERIFICATION_TARGET_MISMATCH",
+                        "message", exception.getMessage()
+                ));
+    }
+
+    @ExceptionHandler(InvalidPasswordResetTokenException.class)
+    public ResponseEntity<Map<String, String>> handleInvalidPasswordResetToken(
+            InvalidPasswordResetTokenException exception
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(Map.of(
+                        "code", "INVALID_PASSWORD_RESET_TOKEN",
+                        "message", exception.getMessage()
+                ));
+    }
+
+    @ExceptionHandler(PasswordConfirmationMismatchException.class)
+    public ResponseEntity<Map<String, String>> handlePasswordConfirmationMismatch(
+            PasswordConfirmationMismatchException exception
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(Map.of(
+                        "code", "PASSWORD_CONFIRMATION_MISMATCH",
                         "message", exception.getMessage()
                 ));
     }
