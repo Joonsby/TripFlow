@@ -368,6 +368,71 @@
   font-weight: 800;
 }
 
+.auth-modal-static-field {
+  display: grid;
+  gap: 4px;
+  padding: 12px 14px;
+  background: #f6f9fc;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  min-width: 0;
+}
+
+.auth-modal-static-field span {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.auth-modal-static-field strong {
+  overflow-wrap: anywhere;
+  color: #14213d;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.auth-modal-method-guide {
+  margin: 2px 0 0;
+  color: #526172;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.auth-modal-method-choice {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.auth-modal-method-button {
+  display: grid;
+  gap: 4px;
+  width: 100%;
+  padding: 14px 16px;
+  background: #ffffff;
+  border: 1px solid #9dc9e8;
+  border-radius: 14px;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.auth-modal-method-button:hover {
+  background: #f2f9ff;
+  border-color: #1687d9;
+}
+
+.auth-modal-method-button strong {
+  color: #0f6fb8;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.auth-modal-method-button small {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 700;
+}
 .auth-modal-result {
   display: grid;
   gap: 14px;

@@ -8,9 +8,11 @@ type Props = {
   notice: string
   onSocialClick: (provider: string) => void
   onSuccess: (response: LoginResponse) => void
+  onFindEmail: () => void
+  onFindPassword: () => void
 }
 
-export default function LoginForm({ notice, onSocialClick, onSuccess }: Props) {
+export default function LoginForm({ notice, onSocialClick, onSuccess, onFindEmail, onFindPassword }: Props) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [emailError, setEmailError] = useState('')
@@ -83,7 +85,9 @@ export default function LoginForm({ notice, onSocialClick, onSuccess }: Props) {
         </button>
       </form>
       <nav className="login-modal-help" aria-label="계정 도움말">
-        <a href="/find-id">아이디 찾기</a><span aria-hidden="true" /><a href="/find-password">비밀번호 찾기</a>
+        <button type="button" onClick={onFindEmail}>아이디 찾기</button>
+        <span aria-hidden="true" />
+        <button type="button" onClick={onFindPassword}>비밀번호 찾기</button>
       </nav>
       <SocialLoginButtons onSocialClick={onSocialClick} />
       {notice && <p className="auth-modal-notice">{notice}</p>}
