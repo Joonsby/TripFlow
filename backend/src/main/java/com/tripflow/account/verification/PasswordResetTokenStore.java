@@ -30,6 +30,23 @@ public class PasswordResetTokenStore {
         return token;
     }
 
+    /**
+     * 토큰을 소비하지 않고 소유자만 확인한다.
+     * 저장을 시도하기 전 사전 검증(예: 이전 비밀번호와 동일한지)에 쓴다.
+     */
+    public Integer find(String token) {
+        String key = hash(token);
+        TokenValue value = values.get(key);
+        if (value == null) {
+            return null;
+        }
+        if (value.expiresAt().isBefore(Instant.now())) {
+            values.remove(key);
+            return null;
+        }
+        return value.userId();
+    }
+
     public Integer consume(String token) {
         TokenValue value = values.remove(hash(token));
         if (value == null || value.expiresAt().isBefore(Instant.now())) {

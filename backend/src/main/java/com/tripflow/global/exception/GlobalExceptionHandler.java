@@ -5,6 +5,7 @@ import com.tripflow.account.exception.DuplicatePhoneNumberException;
 import com.tripflow.account.exception.InvalidPasswordResetTokenException;
 import com.tripflow.account.exception.PasswordConfirmationMismatchException;
 import com.tripflow.account.exception.PhoneVerificationTargetMismatchException;
+import com.tripflow.account.exception.SamePasswordException;
 import com.tripflow.auth.exception.InvalidLoginException;
 import com.tripflow.host.exception.BusinessVerificationFailedException;
 import com.tripflow.host.exception.DuplicateBusinessNumberException;
@@ -137,6 +138,18 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.BAD_REQUEST)
                 .body(Map.of(
                         "code", "INVALID_PASSWORD_RESET_TOKEN",
+                        "message", exception.getMessage()
+                ));
+    }
+
+    @ExceptionHandler(SamePasswordException.class)
+    public ResponseEntity<Map<String, String>> handleSamePassword(
+            SamePasswordException exception
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(Map.of(
+                        "code", "SAME_AS_CURRENT_PASSWORD",
                         "message", exception.getMessage()
                 ));
     }

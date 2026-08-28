@@ -4,6 +4,7 @@ import com.tripflow.account.dto.passwordreset.*;
 import com.tripflow.account.exception.InvalidPasswordResetTokenException;
 import com.tripflow.account.exception.PasswordConfirmationMismatchException;
 import com.tripflow.account.exception.PhoneVerificationTargetMismatchException;
+import com.tripflow.account.exception.SamePasswordException;
 import com.tripflow.account.verification.EmailSender;
 import com.tripflow.account.verification.EmailVerificationStore;
 import com.tripflow.account.verification.PasswordResetTokenStore;
@@ -100,8 +101,21 @@ public class PasswordResetService {
             throw new PasswordConfirmationMismatchException();
         }
 
-        Integer userId = passwordResetTokenStore.consume(request.resetToken());
+        Integer userId = passwordResetTokenStore.find(request.resetToken());
         if (userId == null) {
+            throw new InvalidPasswordResetTokenException();
+        }
+
+        User user = userMapper.findById(userId);
+        if (user == null) {
+            throw new InvalidPasswordResetTokenException();
+        }
+        if (passwordEncoder.matches(request.newPassword(), user.getPasswordHash())) {
+            // 토큰은 남겨 둔다. 다른 비밀번호로는 다시 인증하지 않고 이어서 시도할 수 있어야 한다.
+            throw new SamePasswordException();
+        }
+
+        if (passwordResetTokenStore.consume(request.resetToken()) == null) {
             throw new InvalidPasswordResetTokenException();
         }
 

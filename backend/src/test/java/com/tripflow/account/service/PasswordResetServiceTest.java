@@ -6,6 +6,7 @@ import com.tripflow.account.dto.passwordreset.PasswordResetPhoneVerificationVeri
 import com.tripflow.account.dto.passwordreset.PasswordResetRequest;
 import com.tripflow.account.dto.passwordreset.PasswordResetVerificationResponse;
 import com.tripflow.account.exception.InvalidPasswordResetTokenException;
+import com.tripflow.account.exception.SamePasswordException;
 import com.tripflow.account.verification.EmailSender;
 import com.tripflow.account.verification.EmailVerificationStore;
 import com.tripflow.account.verification.PasswordResetTokenStore;
@@ -89,8 +90,11 @@ class PasswordResetServiceTest {
         user.setUserId(7);
         user.setEmail("user@example.com");
         user.setPhoneNumber("01012345678");
+        user.setPasswordHash("old-hash");
 
         when(userMapper.findByEmail("user@example.com")).thenReturn(user);
+        when(userMapper.findById(7)).thenReturn(user);
+        when(passwordEncoder.matches("new-password", "old-hash")).thenReturn(false);
         when(passwordEncoder.encode("new-password")).thenReturn("encoded-password");
         when(userMapper.updatePassword(7, "encoded-password")).thenReturn(1);
 
@@ -111,5 +115,41 @@ class PasswordResetServiceTest {
         verify(userMapper).updatePassword(7, "encoded-password");
         verify(refreshTokenMapper).deleteAllByUserId(7);
         assertThrows(InvalidPasswordResetTokenException.class, () -> passwordResetService.resetPassword(request));
+    }
+
+    @Test
+    void sameAsCurrentPasswordIsRejectedAndKeepsToken() {
+        User user = new User();
+        user.setUserId(7);
+        user.setEmail("user@example.com");
+        user.setPhoneNumber("01012345678");
+        user.setPasswordHash("old-hash");
+
+        when(userMapper.findByEmail("user@example.com")).thenReturn(user);
+        when(userMapper.findById(7)).thenReturn(user);
+        when(passwordEncoder.matches("old-password", "old-hash")).thenReturn(true);
+        when(passwordEncoder.matches("new-password", "old-hash")).thenReturn(false);
+        when(passwordEncoder.encode("new-password")).thenReturn("encoded-password");
+        when(userMapper.updatePassword(7, "encoded-password")).thenReturn(1);
+
+        phoneVerificationStore.save("01012345678", PhoneVerificationPurpose.RESET_PASSWORD, "123456");
+        PasswordResetVerificationResponse verification = passwordResetService.verifyCode(
+                new PasswordResetPhoneVerificationVerifyRequest("user@example.com", "01012345678", "123456")
+        );
+
+        assertThrows(
+                SamePasswordException.class,
+                () -> passwordResetService.resetPassword(
+                        new PasswordResetRequest(verification.resetToken(), "old-password", "old-password")
+                )
+        );
+
+        // 거절된 뒤에도 같은 토큰으로 다른 비밀번호를 저장할 수 있어야 한다.
+        passwordResetService.resetPassword(
+                new PasswordResetRequest(verification.resetToken(), "new-password", "new-password")
+        );
+
+        verify(userMapper).updatePassword(7, "encoded-password");
+        verify(refreshTokenMapper).deleteAllByUserId(7);
     }
 }
