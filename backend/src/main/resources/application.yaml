@@ -21,6 +21,15 @@ tripflow:
     access-token-minutes: ${JWT_ACCESS_TOKEN_MINUTES:30}
     refresh-token-days: ${JWT_REFRESH_TOKEN_DAYS:14}
     cookie-secure: ${COOKIE_SECURE:false}
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,https://trip-flow-phi-peach.vercel.app}
+  sms:
+    api-key: ${SOLAPI_API_KEY}
+    api-secret: ${SOLAPI_API_SECRET}
+    sender-number: ${SOLAPI_SENDER_NUMBER}
+    kakao-pf-id: ${SOLAPI_KAKAO_PF_ID}
+    kakao-template-id: ${SOLAPI_KAKAO_TEMPLATE_ID}
+
 
 mybatis:
   mapper-locations: classpath*:mapper/**/*.xml
