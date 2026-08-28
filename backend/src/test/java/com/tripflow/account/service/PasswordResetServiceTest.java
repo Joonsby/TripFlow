@@ -1,9 +1,13 @@
 package com.tripflow.account.service;
 
+import com.tripflow.account.dto.passwordreset.EmailVerificationSendRequest;
+import com.tripflow.account.dto.passwordreset.EmailVerificationVerifyRequest;
 import com.tripflow.account.dto.passwordreset.PasswordResetPhoneVerificationVerifyRequest;
 import com.tripflow.account.dto.passwordreset.PasswordResetRequest;
 import com.tripflow.account.dto.passwordreset.PasswordResetVerificationResponse;
 import com.tripflow.account.exception.InvalidPasswordResetTokenException;
+import com.tripflow.account.verification.EmailSender;
+import com.tripflow.account.verification.EmailVerificationStore;
 import com.tripflow.account.verification.PasswordResetTokenStore;
 import com.tripflow.account.verification.PhoneVerificationPurpose;
 import com.tripflow.account.verification.PhoneVerificationStore;
@@ -31,13 +35,17 @@ class PasswordResetServiceTest {
     private RefreshTokenMapper refreshTokenMapper;
     @Mock
     private PasswordEncoder passwordEncoder;
+    @Mock
+    private EmailSender emailSender;
     private PhoneVerificationStore phoneVerificationStore;
+    private EmailVerificationStore emailVerificationStore;
     private PasswordResetTokenStore passwordResetTokenStore;
     private PasswordResetService passwordResetService;
 
     @BeforeEach
     void setUp() {
         phoneVerificationStore = new PhoneVerificationStore();
+        emailVerificationStore = new EmailVerificationStore();
         passwordResetTokenStore = new PasswordResetTokenStore();
         PhoneVerificationService phoneVerificationService = new PhoneVerificationService(null, phoneVerificationStore);
         passwordResetService = new PasswordResetService(
@@ -45,7 +53,33 @@ class PasswordResetServiceTest {
                 refreshTokenMapper,
                 passwordEncoder,
                 phoneVerificationService,
-                passwordResetTokenStore
+                passwordResetTokenStore,
+                emailSender,
+                emailVerificationStore
+        );
+    }
+
+    @Test
+    void verifiedEmailIssuesPasswordResetToken() {
+        User user = new User();
+        user.setUserId(7);
+        user.setEmail("user@example.com");
+
+        when(userMapper.findByEmail("user@example.com")).thenReturn(user);
+
+        passwordResetService.sendEmailVerificationCode(new EmailVerificationSendRequest("user@example.com"));
+        String code = emailVerificationStore.getCode("user@example.com");
+        PasswordResetVerificationResponse response = passwordResetService.verifyEmailVerificationCode(
+                new EmailVerificationVerifyRequest("user@example.com", code)
+        );
+
+        verify(emailSender).sendVerificationCode("user@example.com", code);
+        assertEquals(PasswordResetTokenStore.TOKEN_TTL_SECONDS, response.expiresIn());
+        assertThrows(
+                IllegalStateException.class,
+                () -> passwordResetService.verifyEmailVerificationCode(
+                        new EmailVerificationVerifyRequest("user@example.com", code)
+                )
         );
     }
 

@@ -1,9 +1,6 @@
 package com.tripflow.account.controller;
 
-import com.tripflow.account.dto.passwordreset.PasswordResetPhoneVerificationSendRequest;
-import com.tripflow.account.dto.passwordreset.PasswordResetPhoneVerificationVerifyRequest;
-import com.tripflow.account.dto.passwordreset.PasswordResetRequest;
-import com.tripflow.account.dto.passwordreset.PasswordResetVerificationResponse;
+import com.tripflow.account.dto.passwordreset.*;
 import com.tripflow.account.service.PasswordResetService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -22,6 +19,26 @@ import org.springframework.web.bind.annotation.RestController;
 public class PasswordResetController {
 
     private final PasswordResetService passwordResetService;
+
+    @PostMapping("/email-verifications")
+    @Operation(summary = "이메일 인증번호 발송", description = "가입된 이메일로 비밀번호 초기화 인증번호를 발송합니다.")
+    public ResponseEntity<Void> sendEmailVerificationCode(
+            @Valid @RequestBody EmailVerificationSendRequest request
+    ) {
+        passwordResetService.sendEmailVerificationCode(request);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/email-verifications/verify")
+    @Operation(
+            summary = "이메일 인증번호 확인",
+            description = "이메일 인증번호를 확인하고 5분간 유효한 비밀번호 초기화 토큰을 발급합니다."
+    )
+    public ResponseEntity<PasswordResetVerificationResponse> verifyEmailVerificationCode(
+            @Valid @RequestBody EmailVerificationVerifyRequest request
+    ) {
+        return ResponseEntity.ok(passwordResetService.verifyEmailVerificationCode(request));
+    }
 
     @PostMapping("/phone-verifications")
     @Operation(summary = "비밀번호 초기화 인증번호 발송", description = "이메일과 휴대폰 번호가 일치하는 회원에게 인증번호를 발송합니다.")
