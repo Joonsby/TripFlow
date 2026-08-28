@@ -183,6 +183,9 @@ function Header({ authenticatedUser, onAuthClick, onLogout, onNavigate }: Header
                 user={authenticatedUser}
                 items={[
                   { label: t.myPage, onSelect: () => navigate('/mypage') },
+                  ...(authenticatedUser.isHost
+                    ? [{ label: t.hostMode, onSelect: () => navigate('/host/dashboard') }]
+                    : []),
                   { label: t.reservations, onSelect: () => navigate('/reservations') },
                   { label: t.wishlist, onSelect: () => navigate('/wishlist') },
                   { label: t.trips, onSelect: () => navigate('/trips') },

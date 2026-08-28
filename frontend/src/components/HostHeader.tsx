@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { AuthUser } from '../stores/authStore'
+import { lockBodyScroll } from '../utils/bodyScrollLock'
 import UserProfileMenu from './UserProfileMenu'
 import logo from '../assets/logo.png'
 import './HostHeader.css'
@@ -20,6 +21,21 @@ const hostMenus = [
 
 function HostHeader({ user, pathname, onLogout, onNavigate }: HostHeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+
+  useEffect(() => {
+    if (!isMenuOpen) return
+
+    const unlockBodyScroll = lockBodyScroll()
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setIsMenuOpen(false)
+    }
+
+    window.addEventListener('keydown', closeOnEscape)
+    return () => {
+      unlockBodyScroll()
+      window.removeEventListener('keydown', closeOnEscape)
+    }
+  }, [isMenuOpen])
 
   const navigate = (path: string) => {
     onNavigate(path)
@@ -57,10 +73,26 @@ function HostHeader({ user, pathname, onLogout, onNavigate }: HostHeaderProps) {
           <span />
         </button>
 
+        <button
+          type="button"
+          className={`host-header-backdrop${isMenuOpen ? ' is-open' : ''}`}
+          aria-label="호스트 메뉴 닫기"
+          tabIndex={isMenuOpen ? 0 : -1}
+          onClick={() => setIsMenuOpen(false)}
+        />
+
         <div
           id="host-header-menu"
           className={`host-header-menu${isMenuOpen ? ' is-open' : ''}`}
         >
+          <div className="host-sidebar-heading">
+            <div>
+              <img src={logo} alt="" />
+              <strong>호스트 메뉴</strong>
+            </div>
+            <button type="button" aria-label="호스트 메뉴 닫기" onClick={() => setIsMenuOpen(false)}>×</button>
+          </div>
+
           <div className="host-header-links">
             {hostMenus.map((menu) => (
               <button
