@@ -50,6 +50,7 @@ public class SignupService {
     public SignupResponse signup(SignupRequest request) {
         String email = normalizeEmail(request.email());
         String name = request.name().trim();
+        String nickname = normalizeOptionalNickname(request.nickname());
         String phoneNumber = request.phoneNumber().trim();
 
         if (userMapper.existsByEmail(email)) {
@@ -60,16 +61,29 @@ public class SignupService {
         }
 
         String passwordHash = passwordEncoder.encode(request.password());
-        User user = new User(passwordHash, name, phoneNumber, email);
+        User user = new User(passwordHash, name, nickname, phoneNumber, email);
 
         if (userMapper.insertUser(user) != 1) {
             throw new IllegalStateException("회원가입 처리 중 오류가 발생했습니다.");
         }
 
-        return new SignupResponse(user.getUserId(), user.getEmail(), user.getName(), user.getPhoneNumber());
+        return new SignupResponse(
+                user.getUserId(),
+                user.getEmail(),
+                user.getName(),
+                user.getNickname(),
+                user.getPhoneNumber()
+        );
     }
 
     private String normalizeEmail(String email) {
         return email.trim().toLowerCase(Locale.ROOT);
+    }
+
+    private String normalizeOptionalNickname(String nickname) {
+        if (nickname == null || nickname.isBlank()) {
+            return null;
+        }
+        return nickname.trim();
     }
 }

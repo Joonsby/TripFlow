@@ -5,6 +5,7 @@ import type { AuthUser } from '../stores/authStore'
 export type SignupRequest = {
   email: string
   name: string
+  nickname: string | null
   password: string
   phoneNumber: string
 }
@@ -13,6 +14,7 @@ export type SignupResponse = {
   userId: number
   email: string
   name: string
+  nickname: string | null
   phoneNumber: string
 }
 
@@ -38,11 +40,57 @@ export type EmailAvailabilityResponse = {
   available: boolean
 }
 
-export type AuthErrorCode =
-  | 'DUPLICATE_EMAIL'
-  | 'DUPLICATE_PHONE_NUMBER'
-  | 'VALIDATION_FAILED'
-  | 'INVALID_CREDENTIALS'
+export type PhoneVerificationRequest = {
+  phoneNumber: string
+}
+
+export type PhoneVerificationConfirmRequest = PhoneVerificationRequest & {
+  code: string
+}
+
+export type EmailRecoveryRequest = PhoneVerificationRequest & {
+  name: string
+}
+
+export type EmailRecoveryConfirmRequest = EmailRecoveryRequest & {
+  code: string
+}
+
+export type EmailRecoveryResponse = {
+  email: string
+}
+
+export type PasswordResetVerificationResponse = {
+  resetToken: string
+  expiresIn: number
+}
+
+export type PasswordResetRequest = {
+  resetToken: string
+  newPassword: string
+  newPasswordConfirm: string
+}
+
+export type PasswordResetPhoneRequest = PhoneVerificationRequest & {
+  email: string
+}
+
+export type PasswordResetPhoneConfirmRequest = PasswordResetPhoneRequest & {
+  code: string
+}
+
+export const AUTH_ERROR_CODES = [
+  'DUPLICATE_EMAIL',
+  'DUPLICATE_PHONE_NUMBER',
+  'VALIDATION_FAILED',
+  'INVALID_CREDENTIALS',
+  'PHONE_VERIFICATION_TARGET_MISMATCH',
+  'INVALID_PASSWORD_RESET_TOKEN',
+  'PASSWORD_CONFIRMATION_MISMATCH',
+  'SAME_AS_CURRENT_PASSWORD',
+] as const
+
+export type AuthErrorCode = (typeof AUTH_ERROR_CODES)[number]
 
 export type AuthErrorResponse = {
   code?: AuthErrorCode
@@ -104,11 +152,9 @@ const parseErrorResponse = (value: unknown): AuthErrorResponse => {
 
   return {
     code:
-      value.code === 'DUPLICATE_EMAIL' ||
-      value.code === 'DUPLICATE_PHONE_NUMBER' ||
-      value.code === 'VALIDATION_FAILED' ||
-      value.code === 'INVALID_CREDENTIALS'
-        ? value.code
+      typeof value.code === 'string' &&
+      (AUTH_ERROR_CODES as readonly string[]).includes(value.code)
+        ? (value.code as AuthErrorCode)
         : undefined,
     message: typeof value.message === 'string' ? value.message : undefined,
     errors,
@@ -189,5 +235,98 @@ export async function logout(): Promise<void> {
     })
   } finally {
     clearSessionMarker()
+  }
+}
+
+export async function sendSignupPhoneVerification(request: PhoneVerificationRequest): Promise<void> {
+  try {
+    await apiClient.post('/api/auth/signup/phone-verifications', request)
+  } catch (error) {
+    return toAuthApiError(error)
+  }
+}
+
+export async function verifySignupPhone(request: PhoneVerificationConfirmRequest): Promise<void> {
+  try {
+    await apiClient.post('/api/auth/signup/phone-verifications/verify', request)
+  } catch (error) {
+    return toAuthApiError(error)
+  }
+}
+
+export async function sendEmailRecoveryVerification(request: EmailRecoveryRequest): Promise<void> {
+  try {
+    await apiClient.post('/api/auth/email-recovery/phone-verifications', request)
+  } catch (error) {
+    return toAuthApiError(error)
+  }
+}
+
+export async function verifyEmailRecoveryCode(
+  request: EmailRecoveryConfirmRequest,
+): Promise<EmailRecoveryResponse> {
+  try {
+    const response = await apiClient.post<EmailRecoveryResponse>(
+      '/api/auth/email-recovery/phone-verifications/verify',
+      request,
+    )
+    return response.data
+  } catch (error) {
+    return toAuthApiError(error)
+  }
+}
+
+export async function sendPasswordResetEmailVerification(email: string): Promise<void> {
+  try {
+    await apiClient.post('/api/auth/password-reset/email-verifications', { email })
+  } catch (error) {
+    return toAuthApiError(error)
+  }
+}
+
+export async function verifyPasswordResetEmailCode(
+  email: string,
+  code: string,
+): Promise<PasswordResetVerificationResponse> {
+  try {
+    const response = await apiClient.post<PasswordResetVerificationResponse>(
+      '/api/auth/password-reset/email-verifications/verify',
+      { email, code },
+    )
+    return response.data
+  } catch (error) {
+    return toAuthApiError(error)
+  }
+}
+
+export async function sendPasswordResetPhoneVerification(
+  request: PasswordResetPhoneRequest,
+): Promise<void> {
+  try {
+    await apiClient.post('/api/auth/password-reset/phone-verifications', request)
+  } catch (error) {
+    return toAuthApiError(error)
+  }
+}
+
+export async function verifyPasswordResetPhoneCode(
+  request: PasswordResetPhoneConfirmRequest,
+): Promise<PasswordResetVerificationResponse> {
+  try {
+    const response = await apiClient.post<PasswordResetVerificationResponse>(
+      '/api/auth/password-reset/phone-verifications/verify',
+      request,
+    )
+    return response.data
+  } catch (error) {
+    return toAuthApiError(error)
+  }
+}
+
+export async function resetPassword(request: PasswordResetRequest): Promise<void> {
+  try {
+    await apiClient.post('/api/auth/password-reset', request)
+  } catch (error) {
+    return toAuthApiError(error)
   }
 }

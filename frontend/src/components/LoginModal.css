@@ -290,6 +290,168 @@
   font-size: 15px;
 }
 
+.login-modal-field .auth-modal-optional {
+  margin-left: 4px;
+  color: #94a3b8;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 700;
+}
+
+.auth-verification-fields {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+
+.auth-modal-input-action {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 104px;
+  gap: 8px;
+  min-width: 0;
+}
+
+.auth-modal-input-action button,
+.auth-modal-secondary-button {
+  height: 52px;
+  padding: 0 12px;
+  color: #0f6fb8;
+  background: #ffffff;
+  border: 1px solid #9dc9e8;
+  border-radius: 14px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.auth-modal-input-action button:disabled {
+  color: #94a3b8;
+  background: #f1f5f9;
+  border-color: #d9e2ec;
+  cursor: not-allowed;
+}
+
+.auth-modal-secondary-button {
+  width: 100%;
+  color: #526172;
+  border-color: #d9e2ec;
+}
+
+.auth-modal-verification-message {
+  color: #526172;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.auth-modal-verification-message.is-success {
+  color: #1687d9;
+}
+
+.auth-modal-verification-status {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  min-width: 0;
+}
+
+.auth-modal-verification-status .auth-modal-form-error {
+  text-align: left;
+}
+
+.auth-modal-verification-timer {
+  flex: 0 0 auto;
+  color: #ef4444;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+}
+
+.auth-modal-static-field {
+  display: grid;
+  gap: 4px;
+  padding: 12px 14px;
+  background: #f6f9fc;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  min-width: 0;
+}
+
+.auth-modal-static-field span {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.auth-modal-static-field strong {
+  overflow-wrap: anywhere;
+  color: #14213d;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.auth-modal-method-guide {
+  margin: 2px 0 0;
+  color: #526172;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.auth-modal-method-choice {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.auth-modal-method-button {
+  display: grid;
+  gap: 4px;
+  width: 100%;
+  padding: 14px 16px;
+  background: #ffffff;
+  border: 1px solid #9dc9e8;
+  border-radius: 14px;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.auth-modal-method-button:hover {
+  background: #f2f9ff;
+  border-color: #1687d9;
+}
+
+.auth-modal-method-button strong {
+  color: #0f6fb8;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.auth-modal-method-button small {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 700;
+}
+.auth-modal-result {
+  display: grid;
+  gap: 14px;
+  padding: 10px 0;
+  text-align: center;
+}
+
+.auth-modal-result p {
+  margin: 0;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.auth-modal-result strong {
+  overflow-wrap: anywhere;
+  color: #14213d;
+  font-size: 22px;
+}
+
 .login-modal-field input:focus {
   border-color: #1687d9;
   box-shadow: 0 0 0 4px rgba(22, 135, 217, 0.16);
@@ -425,12 +587,16 @@
   margin-top: 20px;
 }
 
-.login-modal-help a,
+.login-modal-help button,
 .login-modal-signup button {
   color: #526172;
+  background: transparent;
+  border: 0;
+  font: inherit;
   font-size: 13px;
   font-weight: 700;
   text-decoration: none;
+  cursor: pointer;
 }
 
 .login-modal-help > span {
@@ -475,6 +641,18 @@
 
   .login-modal-handle {
     display: none;
+  }
+
+}
+
+@media (max-width: 380px) {
+  .auth-modal-input-action {
+    grid-template-columns: minmax(0, 1fr) 92px;
+  }
+
+  .auth-modal-input-action button {
+    padding: 0 8px;
+    font-size: 12px;
   }
 }
 

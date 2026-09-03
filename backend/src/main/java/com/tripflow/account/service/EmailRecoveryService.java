@@ -31,7 +31,7 @@ public class EmailRecoveryService {
                 request.code(),
                 PhoneVerificationPurpose.FIND_EMAIL
         );
-        return new EmailRecoveryResponse(user.getEmail());
+        return new EmailRecoveryResponse(maskEmail(user.getEmail()));
     }
 
     private User findUser(String name, String phoneNumber) {
@@ -40,5 +40,16 @@ public class EmailRecoveryService {
             throw new PhoneVerificationTargetMismatchException();
         }
         return user;
+    }
+
+    private String maskEmail(String email) {
+        int atIndex = email.indexOf('@');
+        if (atIndex <= 0 || atIndex == email.length() - 1) {
+            return "***";
+        }
+
+        String localPart = email.substring(0, atIndex);
+        String visiblePart = localPart.substring(0, Math.min(localPart.length(), 2));
+        return visiblePart + "***" + email.substring(atIndex);
     }
 }

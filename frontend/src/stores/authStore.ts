@@ -4,6 +4,7 @@ export type AuthUser = {
   userId: number
   email: string
   name: string
+  nickname: string | null
   isHost: boolean
 }
 

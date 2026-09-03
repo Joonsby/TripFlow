@@ -5,9 +5,11 @@ import { lockBodyScroll } from '../utils/bodyScrollLock'
 import logo from '../assets/logo.png'
 import LoginForm from './auth/LoginForm'
 import SignupForm from './auth/SignupForm'
+import EmailRecoveryForm from './auth/EmailRecoveryForm'
+import PasswordRecoveryForm from './auth/PasswordRecoveryForm'
 import './LoginModal.css'
 
-type AuthMode = 'login' | 'signup' | 'complete' | 'loginComplete'
+type AuthMode = 'login' | 'signup' | 'emailRecovery' | 'passwordRecovery' | 'complete' | 'loginComplete'
 type AuthModalProps = { initialMode?: AuthMode; onClose: () => void }
 
 function AuthModal({ initialMode = 'login', onClose }: AuthModalProps) {
@@ -25,6 +27,13 @@ function AuthModal({ initialMode = 'login', onClose }: AuthModalProps) {
   const isSignupComplete = mode === 'complete'
   const isLoginComplete = mode === 'loginComplete'
   const isComplete = isSignupComplete || isLoginComplete
+  const isRecoveryMode = mode === 'emailRecovery' || mode === 'passwordRecovery'
+  const heading = mode === 'emailRecovery' ? ['아이디 찾기', '가입 정보와 휴대폰 인증으로 이메일을 확인하세요.']
+    : mode === 'passwordRecovery' ? ['비밀번호 찾기', '가입한 이메일을 확인한 뒤 인증 방법을 선택하세요.']
+      : isLoginMode ? ['로그인', '이메일로 로그인하거나 소셜 계정으로 계속하세요.']
+        : isLoginComplete ? ['로그인이 완료되었습니다.', 'TripFlow에 오신 것을 환영합니다.']
+          : isSignupComplete ? ['회원가입이 완료되었습니다', 'TripFlow와 함께 새로운 여행을 시작해보세요.']
+            : ['회원가입', '이메일 또는 소셜 계정으로 가입하세요.']
 
   const closeModal = useCallback(() => {
     if (isClosingRef.current) return
@@ -115,15 +124,11 @@ function AuthModal({ initialMode = 'login', onClose }: AuthModalProps) {
         <a className="login-modal-logo" href="/" aria-label="TripFlow 홈으로 이동"><img src={logo} alt="TripFlow" /></a>
 
         <div className="login-modal-heading">
-          <h1 id="auth-modal-title">
-            {isLoginMode ? '로그인' : isLoginComplete ? '로그인이 완료되었습니다.' : isSignupComplete ? '회원가입이 완료되었습니다' : '회원가입'}
-          </h1>
-          <p>
-            {isLoginMode ? '이메일로 로그인하거나 소셜 계정으로 계속하세요.' : isLoginComplete ? 'TripFlow에 오신 것을 환영합니다.' : isSignupComplete ? 'TripFlow와 함께 새로운 여행을 시작해보세요.' : '이메일 또는 소셜 계정으로 가입하세요.'}
-          </p>
+          <h1 id="auth-modal-title">{heading[0]}</h1>
+          <p>{heading[1]}</p>
         </div>
 
-        {!isComplete && (
+        {!isComplete && !isRecoveryMode && (
           <div className="auth-modal-tabs" role="tablist" aria-label="인증 모드">
             <button type="button" role="tab" aria-selected={isLoginMode} className="auth-modal-tab" onClick={() => switchMode('login')}>로그인</button>
             <button type="button" role="tab" aria-selected={!isLoginMode} className="auth-modal-tab" onClick={() => switchMode('signup')}>회원가입</button>
@@ -142,13 +147,19 @@ function AuthModal({ initialMode = 'login', onClose }: AuthModalProps) {
               </>
             )}
           </div>
+        ) : mode === 'emailRecovery' ? (
+          <EmailRecoveryForm onBack={() => switchMode('login')} />
+        ) : mode === 'passwordRecovery' ? (
+          <PasswordRecoveryForm onBack={() => switchMode('login')} />
         ) : isLoginMode ? (
-          <LoginForm notice={notice} onSocialClick={(provider) => setNotice(`${provider} 로그인은 준비 중입니다.`)} onSuccess={handleLoginSuccess} />
+          <LoginForm notice={notice} onSocialClick={(provider) => setNotice(`${provider} 로그인은 준비 중입니다.`)}
+            onSuccess={handleLoginSuccess} onFindEmail={() => setMode('emailRecovery')}
+            onFindPassword={() => setMode('passwordRecovery')} />
         ) : (
           <SignupForm notice={notice} onSocialClick={(provider) => setNotice(`${provider} 로그인은 준비 중입니다.`)} onSuccess={() => setMode('complete')} />
         )}
 
-        {!isComplete && (
+        {!isComplete && !isRecoveryMode && (
           <div className="login-modal-signup">
             <span>{isLoginMode ? '아직 회원이 아니신가요?' : '이미 계정이 있으신가요?'}</span>
             <button type="button" onClick={() => switchMode(isLoginMode ? 'signup' : 'login')}>

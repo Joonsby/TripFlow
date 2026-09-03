@@ -8,6 +8,7 @@
         <id property="userId" column="user_id"/>
         <result property="passwordHash" column="password_hash"/>
         <result property="name" column="name"/>
+        <result property="nickname" column="nickname"/>
         <result property="phoneNumber" column="phone_number"/>
         <result property="email" column="email"/>
     </resultMap>
@@ -16,6 +17,7 @@
         user_id,
         password_hash,
         name,
+        nickname,
         phone_number,
         email
     </sql>
@@ -55,6 +57,7 @@
         INSERT INTO user_info (
             password_hash,
             name,
+            nickname,
             phone_number,
             email,
             join_date
@@ -62,6 +65,7 @@
         VALUES (
             #{passwordHash},
             #{name},
+            #{nickname},
             #{phoneNumber},
             #{email},
             NOW()
